@@ -197,15 +197,13 @@ function updateSagImg( newVal, handles )
 if newVal == -1
     sagImgNew = getDataMainGui( 'currSagImg' );
 else
-%     Images              = getDataMainGui( 'Images' );
-%     sagImg              = Images(:,newVal,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
-%     sagImgSize          = size( sagImg ); 
-%     sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
-%     manipulate          = maketform( 'affine',[ 0 ( getDataMainGui( 'flip' ) * getDataMainGui( 'scale' ) ); 1 0; 0 0 ] );        
-%     nearestNeighbour    = makeresampler( 'cubic','fill' );     
-%     sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
-    sagImages              = getDataMainGui( 'sagImages' );
-    sagImgNew = sagImages(:,:,newVal);
+    Images              = getDataMainGui( 'Images' );
+    sagImg              = Images(:,newVal,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
+    sagImgSize          = size( sagImg ); 
+    sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
+    manipulate          = maketform( 'affine',[ 0 ( getDataMainGui( 'flip' ) * getDataMainGui( 'scale' ) ); 1 0; 0 0 ] );        
+    nearestNeighbour    = makeresampler( 'cubic','fill' );     
+    sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
 end
 
 
@@ -402,7 +400,6 @@ set( handles.sliderCor, 'Value'     , halfR );          % same for half
 %%% see *a
 flip            = -1;               % flip upside down
 scale           = 1;                % scale factor
-flipScaleSagCor = flip * scale;
 %%%               % starting from the bottom
 lineWidth       = 1;
 % transversal
@@ -412,49 +409,29 @@ traImg          = Images(:,:,firstImg);
 axes(handles.transversal);
 imshow( traImg, [ Imin, Imax ]);
 
-% sagittal
-% sagImg              = Images(:,halfC,:);
-% sagImgSize          = size( sagImg ); 
-% sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);       % original Img without manipulation
-% %%%%%%%%%%%%%%% *a
-% x=pi+(pi/2); % 180 + 90    % 2*pi = 360°
-% Trotation = [ cos(x) sin(x) 0; -sin(x) cos(x) 0; 0 0 1 ];
-% Tscale = [ 1 0 0; 0 1 0; 0 0 1 ]; % 0 1.5 0 für den zweiten sind gute werte. Wenn die Scalierung größer als daie 'Canvas' wird schrumpft das Bild in der Canvas  
-% T = Trotation * Tscale;
-% %%%%%%%%%%%%%%%
-% manipulate          = maketform( 'affine', T );    % rotate and scale    
-% nearestNeighbour    = makeresampler( 'cubic','fill' );     
-% sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
-% axes( handles.sagittal );
-% imshow( sagImgNew, [ Imin, Imax ] );
-
 
 % sagittal
-for i = amountColumns:-1:1
-    sagImg              = Images(:,i,:);                           
-    sagImgSize          = size( sagImg ); 
-    sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   
-    manipulate          = maketform( 'affine',[ 0 flip*scale; 1 0; 0 0 ] );        
-    nearestNeighbour    = makeresampler( 'cubic','fill' );     
-    sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
-    sagImages(:,:,i)    = sagImgNew; 
-end
-
-sagImg = sagImages(:,:,halfC);
+sagImg              = Images(:,halfC,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
+sagImgSize          = size( sagImg ); 
+sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
+manipulate          = maketform( 'affine',[ 0 flip*scale; 1 0; 0 0 ] );        
+nearestNeighbour    = makeresampler( 'cubic','fill' );     
+sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
 axes(handles.sagittal);
-imshow( sagImg, [ Imin, Imax ]);    
+imshow( sagImgNew, [ Imin, Imax ]);    
 
 
 % coronal
 corImg              = Images(halfR,:,:);
 corImgSize          = size( corImg ); 
 corImgReshape       = reshape( corImg, [ corImgSize(2), corImgSize(3) ]);       % original Img without manipulation
-manipulate          = maketform( 'affine',[ 0 flipScaleSagCor; 1 0; 0 0 ] );        
+manipulate          = maketform( 'affine',[ 0 flip*scale; 1 0; 0 0 ] );        
 nearestNeighbour    = makeresampler( 'cubic','fill' );     
-%nearestNeighbour    = makeresampler( {'cubic','nearest'},'fill' ); 
+%nearestNeighbour    = makeresampler( {'cubic','nearest'},'fill' );
 corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
 axes( handles.coronal );
 imshow( corImgNew, [ Imin, Imax ] );
+
 
 sagSize         = size( sagImgNew );
 sagRows         = sagSize(1);
@@ -476,8 +453,6 @@ ratioCorSag = sagColumns / corColumns;
 setDataMainGui( 'lastFolder'    , currentFolder  );
 setDataMainGui( 'defaultImages' , Images         );
 setDataMainGui( 'Images'        , Images         );
-setDataMainGui( 'traImages'     , Images         );
-setDataMainGui( 'sagImages'     , sagImages      );
 
 setDataMainGui( 'Isize'         , Isize          );
 setDataMainGui( 'files'         , files          );
@@ -499,7 +474,7 @@ setDataMainGui( 'currTraImg'    , traImg         );
 setDataMainGui( 'sagSize'       , sagSize        );
 setDataMainGui( 'sagRows'       , sagRows        );
 setDataMainGui( 'sagColumns'    , sagColumns     );
-setDataMainGui( 'currSagImg'    , sagImg         );
+setDataMainGui( 'currSagImg'    , sagImgNew      );
 
 setDataMainGui( 'corSize'       , corSize        );
 setDataMainGui( 'corRows'       , corRows        );

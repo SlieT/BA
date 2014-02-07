@@ -302,8 +302,6 @@ currImin    = getDataMainGui( 'currImin' );
 currImax    = getDataMainGui( 'currImax' );
 
 handlesMain = getDataMainGui( 'handles' );
-x = get( handlesMain.sliderTra, 'Value' );
-disp(x)
 
 if currVal == 1      % transversal
     currImg     = getDataMainGui( 'currTraImg' );
@@ -360,6 +358,16 @@ function testViewSlider_Callback(hObject, eventdata, handles)
 newVal = round( get( hObject,'Value' ));          % since step = 1 we round to the next integer
 set( handles.testViewSlider, 'Value', newVal );
 
+whichView = get( handles.chooseView, 'Value');
+
+if whichView == 1       % transversal
+
+elseif whichView == 2   % sagittal
+
+else                    % coronal
+
+end
+
 
 
 
@@ -374,6 +382,8 @@ function testViewSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
 
 
 
