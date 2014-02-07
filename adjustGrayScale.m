@@ -57,14 +57,28 @@ handles.output = hObject;
 
 hMain = getappdata(0, 'hMainGui');
 
-% draw the transversal image on default
+% set some data
 currTraImg  = getappdata( hMain, 'currTraImg' );
+currSagImg  = getappdata( hMain, 'currSagImg' );
+currCorImg  = getappdata( hMain, 'currCorImg' );
 currImin    = getappdata( hMain, 'currImin' );
 currImax    = getappdata( hMain, 'currImax' );
 setappdata(handles.adjustGrayScale, 'currImg', currTraImg);
+setappdata(handles.adjustGrayScale, 'currTraImg', currTraImg );
+setappdata(handles.adjustGrayScale, 'currSagImg', currSagImg );
+setappdata(handles.adjustGrayScale, 'currCorImg', currCorImg );
 setappdata(handles.adjustGrayScale, 'currMin', currImin  );
 setappdata(handles.adjustGrayScale, 'currMax', currImax  );
 imshow( currTraImg, [ currImin, currImax ]);
+
+% set slider
+handlesMain  = getappdata(hMain, 'handles');
+sliderMin     = get( handlesMain.sliderTra, 'Min' );
+sliderMax     = get( handlesMain.sliderTra, 'Max' );
+sliderValue   = get( handlesMain.sliderTra, 'Value' );
+set( handles.testViewSlider, 'Min', sliderMin );
+set( handles.testViewSlider, 'Max', sliderMax );
+set( handles.testViewSlider, 'Value', sliderValue );
 
 % update the rangeInfo
 Imin        = getappdata( hMain, 'currImin' );
@@ -298,13 +312,11 @@ function chooseView_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from chooseView
 
 currVal     = get(hObject,'Value'); 
-currImin    = getDataMainGui( 'currImin' );
-currImax    = getDataMainGui( 'currImax' );
 
 handlesMain = getDataMainGui( 'handles' );
 
 if currVal == 1      % transversal
-    currImg     = getDataMainGui( 'currTraImg' );
+    currImg       = getappdata(handles.adjustGrayScale, 'currTraImg' );
     sliderMin     = get( handlesMain.sliderTra, 'Min' );
     sliderMax     = get( handlesMain.sliderTra, 'Max' );
     sliderValue   = get( handlesMain.sliderTra, 'Value' );
@@ -312,7 +324,7 @@ if currVal == 1      % transversal
     set( handles.testViewSlider, 'Max', sliderMax );
     set( handles.testViewSlider, 'Value', sliderValue );
 elseif currVal == 2  % sagittal
-    currImg = getDataMainGui( 'currSagImg' ); 
+    currImg       = getappdata(handles.adjustGrayScale, 'currSagImg' ); 
     sliderMin     = get( handlesMain.sliderSag, 'Min' );
     sliderMax     = get( handlesMain.sliderSag, 'Max' );
     sliderValue   = get( handlesMain.sliderSag, 'Value' );
@@ -320,7 +332,7 @@ elseif currVal == 2  % sagittal
     set( handles.testViewSlider, 'Max', sliderMax );
     set( handles.testViewSlider, 'Value', sliderValue );
 else                 % coronal
-    currImg = getDataMainGui( 'currCorImg' );
+    currImg       = getappdata(handles.adjustGrayScale, 'currCorImg' );
     sliderMin     = get( handlesMain.sliderCor, 'Min' );
     sliderMax     = get( handlesMain.sliderCor, 'Max' );
     sliderValue   = get( handlesMain.sliderCor, 'Value' );
@@ -329,8 +341,8 @@ else                 % coronal
     set( handles.testViewSlider, 'Value', sliderValue );
 end
 
-imshow( currImg, [ currImin, currImax ]);
 setappdata(handles.adjustGrayScale, 'currImg', currImg);
+applyToView( handles );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -358,15 +370,26 @@ function testViewSlider_Callback(hObject, eventdata, handles)
 newVal = round( get( hObject,'Value' ));          % since step = 1 we round to the next integer
 set( handles.testViewSlider, 'Value', newVal );
 
+% noch die sliderposition merken!
+% und die rangeinfo anpassen
 whichView = get( handles.chooseView, 'Value');
 
 if whichView == 1       % transversal
-
+    Images      = getDataMainGui( 'Images' );
+    currImg     = Images(:,:,newVal);
+    setappdata(handles.adjustGrayScale, 'currTraImg', currImg );
 elseif whichView == 2   % sagittal
-
+    fhGetSagImg = getDataMainGui( 'fhGetSagImg' );
+    currImg     = feval( fhGetSagImg, newVal );
+    setappdata(handles.adjustGrayScale, 'currSagImg', currImg );
 else                    % coronal
-
+    fhGetCorImg = getDataMainGui( 'fhGetCorImg' );
+    handlesMain = getDataMainGui( 'handles' );
+    currImg     = feval( fhGetCorImg, get( handlesMain.sliderCor,'Max' ) + 1 - newVal );
+    setappdata(handles.adjustGrayScale, 'currCorImg', currImg );
 end
+setappdata(handles.adjustGrayScale, 'currImg', currImg );
+applyToView( handles );
 
 
 
@@ -392,6 +415,9 @@ end
 % setappdata(handles.adjustGrayScale, 'currImg', currImg);
 % setappdata(handles.adjustGrayScale, 'currMin', currImin  );
 % setappdata(handles.adjustGrayScale, 'currMax', currImax  );
+% setappdata(handles.adjustGrayScale, 'currTraImg', currTraImg );
+% setappdata(handles.adjustGrayScale, 'currSagImg', currSagImg );
+% setappdata(handles.adjustGrayScale, 'currCorImg', currCorImg );
 
 
 

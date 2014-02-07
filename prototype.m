@@ -197,13 +197,7 @@ function updateSagImg( newVal, handles )
 if newVal == -1
     sagImgNew = getDataMainGui( 'currSagImg' );
 else
-    Images              = getDataMainGui( 'Images' );
-    sagImg              = Images(:,newVal,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
-    sagImgSize          = size( sagImg ); 
-    sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
-    manipulate          = maketform( 'affine',[ 0 ( getDataMainGui( 'flip' ) * getDataMainGui( 'scale' ) ); 1 0; 0 0 ] );        
-    nearestNeighbour    = makeresampler( 'cubic','fill' );     
-    sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
+    sagImgNew = getSagImg( newVal );
 end
 
 
@@ -258,13 +252,7 @@ function updateCorImg( newVal, handles )
 if newVal == -1
     corImgNew = getDataMainGui( 'currCorImg' );
 else
-    Images              = getDataMainGui( 'Images' );
-    corImg              = Images( get( handles.sliderCor,'Max' ) + 1 - newVal,:,:);   % vertical slider sliderTop = front sliderBottom = back
-    corImgSize          = size( corImg ); 
-    corImgReshape       = reshape( corImg, [ corImgSize(2), corImgSize(3) ]);       % original Img without manipulation
-    manipulate          = maketform( 'affine',[ 0 ( getDataMainGui( 'flip' ) * getDataMainGui( 'scale' ) ); 1 0; 0 0 ] );        
-    nearestNeighbour    = makeresampler( 'cubic','fill' );     
-    corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
+    corImgNew = getCorImg( get( handles.sliderCor,'Max' ) + 1 - newVal );
 end
 
 % update data
@@ -326,6 +314,26 @@ function Menu1_Callback(hObject, eventdata, handles)
 
 % --- Executes when prototype is resized.
 function prototype_ResizeFcn(hObject, eventdata, handles)
+
+
+function sagImgNew = getSagImg( value )
+Images              = getDataMainGui( 'Images' ); 
+sagImg              = Images(:,value,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
+sagImgSize          = size( sagImg ); 
+sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
+manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
+nearestNeighbour    = makeresampler( 'cubic','fill' );     
+sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
+
+
+function corImgNew = getCorImg( value )
+Images              = getDataMainGui( 'Images' ); 
+corImg              = Images(value,:,:);
+corImgSize          = size( corImg ); 
+corImgReshape       = reshape( corImg, [ corImgSize(2), corImgSize(3) ]);       % original Img without manipulation
+manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
+nearestNeighbour    = makeresampler( 'cubic','fill' );     
+corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
 
 
 % --------------------------------------------------------------------
@@ -407,48 +415,13 @@ Imin            = min(Images(:));   % since a Matrix is represented as a vecotor
 Imax            = max(Images(:));
 traImg          = Images(:,:,firstImg);
 axes(handles.transversal);
-imshow( traImg, [ Imin, Imax ]);
+imshow( traImg, [ Imin, Imax ]);    
 
-
-% sagittal
-sagImg              = Images(:,halfC,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
-sagImgSize          = size( sagImg ); 
-sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
-manipulate          = maketform( 'affine',[ 0 flip*scale; 1 0; 0 0 ] );        
-nearestNeighbour    = makeresampler( 'cubic','fill' );     
-sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
-axes(handles.sagittal);
-imshow( sagImgNew, [ Imin, Imax ]);    
-
-
-% coronal
-corImg              = Images(halfR,:,:);
-corImgSize          = size( corImg ); 
-corImgReshape       = reshape( corImg, [ corImgSize(2), corImgSize(3) ]);       % original Img without manipulation
-manipulate          = maketform( 'affine',[ 0 flip*scale; 1 0; 0 0 ] );        
-nearestNeighbour    = makeresampler( 'cubic','fill' );     
-%nearestNeighbour    = makeresampler( {'cubic','nearest'},'fill' );
-corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
-axes( handles.coronal );
-imshow( corImgNew, [ Imin, Imax ] );
-
-
-sagSize         = size( sagImgNew );
-sagRows         = sagSize(1);
-sagColumns      = sagSize(2);
-ratioTransSag   = sagRows / numImages;                                            % one step in trans are 'ratioTransSag' steps in sagittal
-
-corSize         = size( corImgNew );
-corRows         = corSize(1);
-corColumns      = corSize(2);
-ratioTransCor   = corRows / numImages;                                            % one step in trans are 'ratioTransCor' steps in coronal
 
 traSize         = size( traImg );
 traRows         = traSize(1);
 traColumns      = traSize(2);
- 
-ratioSagCor = corColumns / sagColumns;
-ratioCorSag = sagColumns / corColumns;
+
 
 setDataMainGui( 'lastFolder'    , currentFolder  );
 setDataMainGui( 'defaultImages' , Images         );
@@ -471,16 +444,34 @@ setDataMainGui( 'traRows'       , traRows        );
 setDataMainGui( 'traColumns'    , traColumns     );
 setDataMainGui( 'currTraImg'    , traImg         );
 
+% sagittal
+sagImgNew       = getSagImg( halfC );
+axes(handles.sagittal);
+imshow( sagImgNew, [ Imin, Imax ]); 
+sagSize         = size( sagImgNew );
+sagRows         = sagSize(1);
+sagColumns      = sagSize(2);
 setDataMainGui( 'sagSize'       , sagSize        );
 setDataMainGui( 'sagRows'       , sagRows        );
 setDataMainGui( 'sagColumns'    , sagColumns     );
 setDataMainGui( 'currSagImg'    , sagImgNew      );
 
+% coronal
+corImgNew = getCorImg( halfR );
+axes( handles.coronal );
+imshow( corImgNew, [ Imin, Imax ] );
+corSize         = size( corImgNew );
+corRows         = corSize(1);
+corColumns      = corSize(2);
 setDataMainGui( 'corSize'       , corSize        );
 setDataMainGui( 'corRows'       , corRows        );
 setDataMainGui( 'corColumns'    , corColumns     );
 setDataMainGui( 'currCorImg'    , corImgNew      );
 
+ratioTransSag   = sagRows / numImages;
+ratioTransCor   = corRows / numImages; 
+ratioSagCor     = corColumns / sagColumns;
+ratioCorSag     = sagColumns / corColumns;
 setDataMainGui( 'ratioTransSag' , ratioTransSag  );
 setDataMainGui( 'ratioTransCor' , ratioTransCor  );
 setDataMainGui( 'ratioSagCor'   , ratioSagCor    );
@@ -489,6 +480,8 @@ setDataMainGui( 'ratioCorSag'   , ratioCorSag    );
 setDataMainGui( 'fhUpdateTraImg', @updateTraImg  );
 setDataMainGui( 'fhUpdateSagImg', @updateSagImg  );
 setDataMainGui( 'fhUpdateCorImg', @updateCorImg  );
+setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
+setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'handles'       , handles  );
 
 % update lines
