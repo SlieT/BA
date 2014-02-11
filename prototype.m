@@ -432,8 +432,6 @@ setDataMainGui( 'files'         , files          );
 setDataMainGui( 'flip'          , flip           );
 setDataMainGui( 'scale'         , scale          );
 setDataMainGui( 'lineWidth'     , lineWidth      );
-setDataMainGui( 'Imin'          , intmin(classI) ); 
-setDataMainGui( 'Imax'          , intmax(classI) );
 setDataMainGui( 'defaultImin'   , Imin           );
 setDataMainGui( 'defaultImax'   , Imax           );
 setDataMainGui( 'currImin'      , Imin           );

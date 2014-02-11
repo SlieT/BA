@@ -22,7 +22,7 @@ function varargout = adjustGrayScale(varargin)
 
 % Edit the above text to modify the response to help adjustGrayScale
 
-% Last Modified by GUIDE v2.5 01-Feb-2014 15:48:05
+% Last Modified by GUIDE v2.5 10-Feb-2014 12:35:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -58,17 +58,23 @@ handles.output = hObject;
 hMain = getappdata(0, 'hMainGui');
 
 % set some data
+Images      = getappdata( hMain, 'Images' );
 currTraImg  = getappdata( hMain, 'currTraImg' );
 currSagImg  = getappdata( hMain, 'currSagImg' );
 currCorImg  = getappdata( hMain, 'currCorImg' );
 currImin    = getappdata( hMain, 'currImin' );
 currImax    = getappdata( hMain, 'currImax' );
+possibleMin = min(Images(:));
+possibleMax = max(Images(:));
 setappdata(handles.adjustGrayScale, 'currImg', currTraImg);
+setappdata(handles.adjustGrayScale, 'currTestImg', currTraImg);
 setappdata(handles.adjustGrayScale, 'currTraImg', currTraImg );
 setappdata(handles.adjustGrayScale, 'currSagImg', currSagImg );
 setappdata(handles.adjustGrayScale, 'currCorImg', currCorImg );
-setappdata(handles.adjustGrayScale, 'currMin', currImin  );
-setappdata(handles.adjustGrayScale, 'currMax', currImax  );
+setappdata(handles.adjustGrayScale, 'currMin', possibleMin  );
+setappdata(handles.adjustGrayScale, 'currMax', possibleMax  );
+setappdata(handles.adjustGrayScale, 'possibleMin', possibleMin );
+setappdata(handles.adjustGrayScale, 'possibleMax', possibleMax );
 imshow( currTraImg, [ currImin, currImax ]);
 
 % set slider
@@ -81,23 +87,24 @@ set( handles.testViewSlider, 'Max', sliderMax );
 set( handles.testViewSlider, 'Value', sliderValue );
 
 % update the rangeInfo
-Imin        = getappdata( hMain, 'currImin' );
-Imax        = getappdata( hMain, 'currImax' );
 imgImin     = min( currTraImg(:) );
 imgImax     = max( currTraImg(:) );
 s1          = 'Over all images, the min-value is ';
 s2          = ' and the max-value is ';
 s3          = '.';
 s4          = ' In this image, the min-value is ';
-s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
+s           = [ s1, num2str( possibleMin ), s2, num2str( possibleMax ), s3, ...
                     s4, num2str( imgImin ), s2, num2str( imgImax ), s3 ];   % use arraycat to not loose the blanks at the end of a word
 set( handles.rangeInfo, 'String', s );
 
 % update the current range
-currIminStr = num2str( currImin );
-currImaxStr = num2str( currImax );
+currIminStr = num2str( possibleMin );
+currImaxStr = num2str( possibleMax );
 set( handles.newMin, 'String', currIminStr );
 set( handles.newMax, 'String', currImaxStr );
+
+h = zoom;
+set(h,'ActionPostCallback',@mypostcallback);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -107,6 +114,11 @@ clc;
 
 % UIWAIT makes adjustGrayScale wait for user response (see UIRESUME)
 % uiwait(handles.adjustGrayScale);
+
+
+function mypostcallback(obj,evd)
+
+
 
 
 % --- Outputs from this function are returned to the command line.
@@ -149,14 +161,15 @@ function newMin = checkNewMin( handles )
 newVal = round(str2double(get(handles.newMin,'String')));
 
 % is in its border?
-if newVal >= getDataMainGui('Imin') && newVal <= getDataMainGui('Imax') ...
-        && newVal < getDataMainGui('currImax')
+if newVal >= getappdata(handles.adjustGrayScale, 'possibleMin') && newVal <= getappdata(handles.adjustGrayScale, 'possibleMax') ...
+        && newVal < getappdata(handles.adjustGrayScale, 'currMax')
     set(handles.newMin,'String', int2str(newVal));
     newMin = newVal;
+    setappdata(handles.adjustGrayScale, 'currMin', newMin);
 else
     % restore old value
     disp( 'Value needs to be in its borders and smaller than the current max' );
-    set(handles.newMin,'String', int2str(getDataMainGui('currImin')));
+    set(handles.newMin,'String', int2str(getappdata(handles.adjustGrayScale, 'currMin')));
     newMin = -1;
 end
 
@@ -171,11 +184,16 @@ function newMin_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of newMin as a double
 
 newMin  = checkNewMin( handles ); 
-minImg  = getappdata(handles.adjustGrayScale, 'currImg' );
-minImg  = setToZero( minImg, 'min', newMin );
-testImg = setToZero( minImg, 'max', str2double(get(handles.newMax,'String')) );
-
-imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
+if newMin == -1
+    return
+else
+    minImg  = getappdata(handles.adjustGrayScale, 'currImg' );
+    minImg  = setToZero( minImg, 'min', newMin );
+    testImg = setToZero( minImg, 'max', str2double(get(handles.newMax,'String')) );
+    setappdata(handles.adjustGrayScale, 'currTestImg', testImg);
+    
+    imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -197,14 +215,15 @@ function newMax = checkNewMax( handles )
 newVal = round(str2double(get(handles.newMax,'String')));
 
 % is in its border?
-if newVal >= getDataMainGui('Imin') && newVal <= getDataMainGui('Imax') ...
-        && newVal > getDataMainGui('currImin')
+if newVal >= getappdata(handles.adjustGrayScale, 'possibleMin') && newVal <= getappdata(handles.adjustGrayScale, 'possibleMax') ...
+        && newVal > getappdata(handles.adjustGrayScale, 'currMin')
     set(handles.newMax,'String', int2str(newVal));
     newMax = newVal;
+    setappdata(handles.adjustGrayScale, 'currMax', newMax);
 else
     % restore old value
     disp( 'Value needs to be in its borders and greater than the current min' );
-    set(handles.newMax,'String', int2str(getDataMainGui('currImax')));
+    set(handles.newMax,'String', int2str(getappdata(handles.adjustGrayScale, 'currMax')));
     newMax = -1;
 end
 
@@ -215,12 +234,17 @@ function newMax_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of newMax as a double
 
 newMax  = checkNewMax( handles ); 
-minImg  = getappdata(handles.adjustGrayScale, 'currImg' );
-minImg  = setToZero( minImg, 'min', str2double(get(handles.newMin,'String')) );
-testImg = setToZero( minImg, 'max', newMax );
+if newMax == -1
+    return
+else
+    minImg  = getappdata(handles.adjustGrayScale, 'currImg' );
+    minImg  = setToZero( minImg, 'min', str2double(get(handles.newMin,'String')) );
+    testImg = setToZero( minImg, 'max', newMax );
+    setappdata(handles.adjustGrayScale, 'currTestImg', testImg);
 
-imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
-
+    imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
+end
+    
 
 % --- Executes during object creation, after setting all properties.
 function newMax_CreateFcn(hObject, eventdata, handles)
@@ -246,9 +270,19 @@ set(handles.newMax,'String', int2str(getDataMainGui('currImax')));
 
 setDataMainGui( 'Images', getDataMainGui( 'defaultImages' ) );
 
-% get default images, set currImg fehlt noch 
+% close this figure
+close;
 
-imshow( getappdata(handles.adjustGrayScale, 'currImg' ), [ getDataMainGui('currImin'), getDataMainGui('currImax') ]);
+% update hMain
+handles        = getDataMainGui( 'handles' );
+fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
+fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
+fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
+
+% functionEvaluation
+feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
+feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
+feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
 
 
 function applyToView( handles )
@@ -259,6 +293,7 @@ newMax = checkNewMax( handles );
 minImg  = getappdata(handles.adjustGrayScale, 'currImg' );
 minImg  = setToZero( minImg, 'min', newMin );
 testImg = setToZero( minImg, 'max', newMax );
+setappdata(handles.adjustGrayScale, 'currTestImg', testImg);
 
 imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
 
@@ -294,6 +329,9 @@ end
 
 setDataMainGui( 'Images', images );
 
+% close this figure
+close;
+
 % update hMain
 handles        = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
@@ -306,6 +344,8 @@ feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
 feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
 
 
+
+
 % --- Executes on selection change in chooseView.
 function chooseView_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns chooseView contents as cell array
@@ -314,6 +354,7 @@ function chooseView_Callback(hObject, eventdata, handles)
 currVal     = get(hObject,'Value'); 
 
 handlesMain = getDataMainGui( 'handles' );
+
 
 if currVal == 1      % transversal
     currImg       = getappdata(handles.adjustGrayScale, 'currTraImg' );
@@ -361,7 +402,7 @@ end
 % --- Executes on button press in showHistogram.
 function showHistogram_Callback(hObject, eventdata, handles)
 
-figure, imhist( getappdata(handles.adjustGrayScale, 'currImg' ) );
+figure, imhist( getappdata(handles.adjustGrayScale, 'currTestImg' ) );
 
 
 % --- Executes on slider movement.
@@ -389,7 +430,31 @@ else                    % coronal
     setappdata(handles.adjustGrayScale, 'currCorImg', currImg );
 end
 setappdata(handles.adjustGrayScale, 'currImg', currImg );
+
+% save current zoom state
+xZoom = xlim;
+yZoom = ylim;
+
 applyToView( handles );
+
+% reset current zoom state
+xlim(xZoom);
+ylim(yZoom);
+
+% update the rangeInfo
+Imin        = getappdata(handles.adjustGrayScale, 'possibleMin' );
+Imax        = getappdata(handles.adjustGrayScale, 'possibleMax' );
+imgImin     = min( currImg(:) );
+imgImax     = max( currImg(:) );
+s1          = 'Over all images, the min-value is ';
+s2          = ' and the max-value is ';
+s3          = '.';
+s4          = ' In this image, the min-value is ';
+s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
+                    s4, num2str( imgImin ), s2, num2str( imgImax ), s3 ];   % use arraycat to not loose the blanks at the end of a word
+set( handles.rangeInfo, 'String', s );
+
+
 
 
 
@@ -436,11 +501,12 @@ end
 % --- Executes on button press in reset.
 function reset_Callback(hObject, eventdata, handles)
 
-currImin = getappdata( handles.adjustGrayScale, 'currMin' );
-currImax = getappdata( handles.adjustGrayScale, 'currMax' );
-currIminStr = num2str( currImin );
-currImaxStr = num2str( currImax );
+possibleMin = getappdata(handles.adjustGrayScale, 'possibleMin' );
+possibleMax = getappdata(handles.adjustGrayScale, 'possibleMax' );
+currIminStr = num2str( possibleMin );
+currImaxStr = num2str( possibleMax );
 set( handles.newMin, 'String', currIminStr );
 set( handles.newMax, 'String', currImaxStr );
 
 applyToView( handles );
+
