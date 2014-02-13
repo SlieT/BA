@@ -436,6 +436,8 @@ setDataMainGui( 'defaultImin'   , Imin           );
 setDataMainGui( 'defaultImax'   , Imax           );
 setDataMainGui( 'currImin'      , Imin           );
 setDataMainGui( 'currImax'      , Imax           );
+setDataMainGui( 'currIlow'      , Imin           ); % lowest value in image (except 0 see adjustGrayScale applyToImages)
+setDataMainGui( 'currIhigh'     , Imax           );
 
 setDataMainGui( 'traSize'       , traSize        );
 setDataMainGui( 'traRows'       , traRows        );

@@ -265,6 +265,8 @@ function restoreDefault_Callback(hObject, eventdata, handles)
 
 setDataMainGui( 'currImin', getDataMainGui('defaultImin') );
 setDataMainGui( 'currImax', getDataMainGui('defaultImax') );
+setDataMainGui( 'currIlow', getDataMainGui('defaultImin') );
+setDataMainGui( 'currIhigh', getDataMainGui('defaultImax') );
 set(handles.newMin,'String', int2str(getDataMainGui('currImin')));
 set(handles.newMax,'String', int2str(getDataMainGui('currImax')));
 
@@ -316,6 +318,9 @@ function applyToImages_Callback(hObject, eventdata, handles)
 min         = str2double(get(handles.newMin,'String'));
 max         = str2double(get(handles.newMax,'String'));
 images      = getDataMainGui( 'Images' );
+
+setDataMainGui( 'currIlow', min );
+setDataMainGui( 'currIhigh', max );
 
 s           = size( images );
 numImages   = s( 3 );
@@ -384,6 +389,20 @@ end
 
 setappdata(handles.adjustGrayScale, 'currImg', currImg);
 applyToView( handles );
+
+
+% update the rangeInfo
+Imin        = getappdata(handles.adjustGrayScale, 'possibleMin' );
+Imax        = getappdata(handles.adjustGrayScale, 'possibleMax' );
+imgImin     = min( currImg(:) );
+imgImax     = max( currImg(:) );
+s1          = 'Over all images, the min-value is ';
+s2          = ' and the max-value is ';
+s3          = '.';
+s4          = ' In this image, the min-value is ';
+s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
+                    s4, num2str( imgImin ), s2, num2str( imgImax ), s3 ];   % use arraycat to not loose the blanks at the end of a word
+set( handles.rangeInfo, 'String', s );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -455,11 +474,6 @@ s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
 set( handles.rangeInfo, 'String', s );
 
 
-
-
-
-
-
 % --- Executes during object creation, after setting all properties.
 function testViewSlider_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to testViewSlider (see GCBO)
@@ -470,32 +484,6 @@ function testViewSlider_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
-
-
-
-
-
-
-% setappdata(handles.adjustGrayScale, 'currImg', currImg);
-% setappdata(handles.adjustGrayScale, 'currMin', currImin  );
-% setappdata(handles.adjustGrayScale, 'currMax', currImax  );
-% setappdata(handles.adjustGrayScale, 'currTraImg', currTraImg );
-% setappdata(handles.adjustGrayScale, 'currSagImg', currSagImg );
-% setappdata(handles.adjustGrayScale, 'currCorImg', currCorImg );
-
-
-
-
-
-% u = 500/65535;
-% o = 900/65535;
-% 
-% a = dicomread('test.dcm');
-% subplot(1,4,1), imshow(a, [ 500 900 ]);
-% ist das gleiche wie 
-% c = imadjust( a, [ u o ], [ 0 1 ] );
-% subplot(1,4,4), imshow(c);
 
 
 % --- Executes on button press in reset.
