@@ -22,7 +22,7 @@ function varargout = adjustGrayScale(varargin)
 
 % Edit the above text to modify the response to help adjustGrayScale
 
-% Last Modified by GUIDE v2.5 10-Feb-2014 12:35:52
+% Last Modified by GUIDE v2.5 15-Feb-2014 13:31:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -66,25 +66,20 @@ currImin    = getappdata( hMain, 'currImin' );
 currImax    = getappdata( hMain, 'currImax' );
 possibleMin = min(Images(:));
 possibleMax = max(Images(:));
-setappdata(handles.adjustGrayScale, 'currImg', currTraImg);
-setappdata(handles.adjustGrayScale, 'currTestImg', currTraImg);
-setappdata(handles.adjustGrayScale, 'currTraImg', currTraImg );
-setappdata(handles.adjustGrayScale, 'currSagImg', currSagImg );
-setappdata(handles.adjustGrayScale, 'currCorImg', currCorImg );
-setappdata(handles.adjustGrayScale, 'currMin', possibleMin  );
-setappdata(handles.adjustGrayScale, 'currMax', possibleMax  );
-setappdata(handles.adjustGrayScale, 'possibleMin', possibleMin );
-setappdata(handles.adjustGrayScale, 'possibleMax', possibleMax );
+setappdata(handles.adjustGrayScale, 'currView'      , 'tra');
+setappdata(handles.adjustGrayScale, 'currImg'       , currTraImg);
+setappdata(handles.adjustGrayScale, 'currTestImg'   , currTraImg);
+setappdata(handles.adjustGrayScale, 'currTraImg'    , currTraImg );
+setappdata(handles.adjustGrayScale, 'currSagImg'    , currSagImg );
+setappdata(handles.adjustGrayScale, 'currCorImg'    , currCorImg );
+setappdata(handles.adjustGrayScale, 'currMin'       , possibleMin  );
+setappdata(handles.adjustGrayScale, 'currMax'       , possibleMax  );
+setappdata(handles.adjustGrayScale, 'possibleMin'   , possibleMin );
+setappdata(handles.adjustGrayScale, 'possibleMax'   , possibleMax );
 imshow( currTraImg, [ currImin, currImax ]);
-
-% set slider
-handlesMain  = getappdata(hMain, 'handles');
-sliderMin     = get( handlesMain.sliderTra, 'Min' );
-sliderMax     = get( handlesMain.sliderTra, 'Max' );
-sliderValue   = get( handlesMain.sliderTra, 'Value' );
-set( handles.testViewSlider, 'Min', sliderMin );
-set( handles.testViewSlider, 'Max', sliderMax );
-set( handles.testViewSlider, 'Value', sliderValue );
+% set global data
+setDataMainGui( 'hAdjustGrayScale', handles );
+setDataMainGui( 'fhUpdateTestView', @updateTestView );
 
 % update the rangeInfo
 imgImin     = min( currTraImg(:) );
@@ -103,9 +98,6 @@ currImaxStr = num2str( possibleMax );
 set( handles.newMin, 'String', currIminStr );
 set( handles.newMax, 'String', currImaxStr );
 
-h = zoom;
-set(h,'ActionPostCallback',@mypostcallback);
-
 % Update handles structure
 guidata(hObject, handles);
 
@@ -114,11 +106,6 @@ clc;
 
 % UIWAIT makes adjustGrayScale wait for user response (see UIRESUME)
 % uiwait(handles.adjustGrayScale);
-
-
-function mypostcallback(obj,evd)
-
-
 
 
 % --- Outputs from this function are returned to the command line.
@@ -175,11 +162,6 @@ end
 
 
 function newMin_Callback(hObject, eventdata, handles)
-% wenn ich mal besser bin kann ich dsa performanter machen indem ich mir
-% das min und max bild hole und UND-verknüpfe überall wo eine 0 steht
-% fallen die werte raus
-% http://www.mathworks.de/company/newsletters/articles/matrix-indexing-in-matlab.html
-
 % Hints: get(hObject,'String') returns contents of newMin as text
 %        str2double(get(hObject,'String')) returns contents of newMin as a double
 
@@ -358,33 +340,16 @@ function chooseView_Callback(hObject, eventdata, handles)
 
 currVal     = get(hObject,'Value'); 
 
-handlesMain = getDataMainGui( 'handles' );
-
 
 if currVal == 1      % transversal
-    currImg       = getappdata(handles.adjustGrayScale, 'currTraImg' );
-    sliderMin     = get( handlesMain.sliderTra, 'Min' );
-    sliderMax     = get( handlesMain.sliderTra, 'Max' );
-    sliderValue   = get( handlesMain.sliderTra, 'Value' );
-    set( handles.testViewSlider, 'Min', sliderMin );
-    set( handles.testViewSlider, 'Max', sliderMax );
-    set( handles.testViewSlider, 'Value', sliderValue );
+    currImg       = getDataMainGui( 'currTraImg' );
+    setappdata(handles.adjustGrayScale, 'currView', 'tra');
 elseif currVal == 2  % sagittal
-    currImg       = getappdata(handles.adjustGrayScale, 'currSagImg' ); 
-    sliderMin     = get( handlesMain.sliderSag, 'Min' );
-    sliderMax     = get( handlesMain.sliderSag, 'Max' );
-    sliderValue   = get( handlesMain.sliderSag, 'Value' );
-    set( handles.testViewSlider, 'Min', sliderMin );
-    set( handles.testViewSlider, 'Max', sliderMax );
-    set( handles.testViewSlider, 'Value', sliderValue );
+    currImg       = getDataMainGui( 'currSagImg' );
+    setappdata(handles.adjustGrayScale, 'currView', 'sag');
 else                 % coronal
-    currImg       = getappdata(handles.adjustGrayScale, 'currCorImg' );
-    sliderMin     = get( handlesMain.sliderCor, 'Min' );
-    sliderMax     = get( handlesMain.sliderCor, 'Max' );
-    sliderValue   = get( handlesMain.sliderCor, 'Value' );
-    set( handles.testViewSlider, 'Min', sliderMin );
-    set( handles.testViewSlider, 'Max', sliderMax );
-    set( handles.testViewSlider, 'Value', sliderValue );
+    currImg       = getDataMainGui( 'currCorImg' );
+    setappdata(handles.adjustGrayScale, 'currView', 'cor');
 end
 
 setappdata(handles.adjustGrayScale, 'currImg', currImg);
@@ -424,65 +389,45 @@ function showHistogram_Callback(hObject, eventdata, handles)
 figure, imhist( getappdata(handles.adjustGrayScale, 'currTestImg' ) );
 
 
-% --- Executes on slider movement.
-function testViewSlider_Callback(hObject, eventdata, handles)
+function updateTestView(view, currImg)
+handles     = getDataMainGui( 'hAdjustGrayScale' );
+currView    = getappdata(handles.adjustGrayScale, 'currView');
 
-newVal = round( get( hObject,'Value' ));          % since step = 1 we round to the next integer
-set( handles.testViewSlider, 'Value', newVal );
-
-% noch die sliderposition merken!
-% und die rangeinfo anpassen
-whichView = get( handles.chooseView, 'Value');
-
-if whichView == 1       % transversal
-    Images      = getDataMainGui( 'Images' );
-    currImg     = Images(:,:,newVal);
+if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
     setappdata(handles.adjustGrayScale, 'currTraImg', currImg );
-elseif whichView == 2   % sagittal
-    fhGetSagImg = getDataMainGui( 'fhGetSagImg' );
-    currImg     = feval( fhGetSagImg, newVal );
+elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
     setappdata(handles.adjustGrayScale, 'currSagImg', currImg );
-else                    % coronal
-    fhGetCorImg = getDataMainGui( 'fhGetCorImg' );
-    handlesMain = getDataMainGui( 'handles' );
-    currImg     = feval( fhGetCorImg, get( handlesMain.sliderCor,'Max' ) + 1 - newVal );
+elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.adjustGrayScale, 'currCorImg', currImg );
 end
 setappdata(handles.adjustGrayScale, 'currImg', currImg );
 
-% save current zoom state
-xZoom = xlim;
-yZoom = ylim;
+if strcmp(currView,view)
+    % due to the sync by the prototype we need to set axes
+    axes( handles.testView );
 
-applyToView( handles );
+    % save current zoom state
+    xZoom = xlim;
+    yZoom = ylim;
 
-% reset current zoom state
-xlim(xZoom);
-ylim(yZoom);
+    applyToView( handles );
 
-% update the rangeInfo
-Imin        = getappdata(handles.adjustGrayScale, 'possibleMin' );
-Imax        = getappdata(handles.adjustGrayScale, 'possibleMax' );
-imgImin     = min( currImg(:) );
-imgImax     = max( currImg(:) );
-s1          = 'Over all images, the min-value is ';
-s2          = ' and the max-value is ';
-s3          = '.';
-s4          = ' In this image, the min-value is ';
-s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
+    % reset current zoom state
+    xlim(xZoom);
+    ylim(yZoom);
+
+    % update the rangeInfo
+    Imin        = getappdata(handles.adjustGrayScale, 'possibleMin' );
+    Imax        = getappdata(handles.adjustGrayScale, 'possibleMax' );
+    imgImin     = min( currImg(:) );
+    imgImax     = max( currImg(:) );
+    s1          = 'Over all images, the min-value is ';
+    s2          = ' and the max-value is ';
+    s3          = '.';
+    s4          = ' In this image, the min-value is ';
+    s           = [ s1, num2str( Imin ), s2, num2str( Imax ), s3, ...
                     s4, num2str( imgImin ), s2, num2str( imgImax ), s3 ];   % use arraycat to not loose the blanks at the end of a word
-set( handles.rangeInfo, 'String', s );
-
-
-% --- Executes during object creation, after setting all properties.
-function testViewSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to testViewSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
+    set( handles.rangeInfo, 'String', s );
 end
 
 
@@ -497,4 +442,3 @@ set( handles.newMin, 'String', currIminStr );
 set( handles.newMax, 'String', currImaxStr );
 
 applyToView( handles );
-

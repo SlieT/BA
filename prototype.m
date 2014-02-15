@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 28-Jan-2014 05:40:14
+% Last Modified by GUIDE v2.5 15-Feb-2014 20:26:00
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -112,9 +112,6 @@ if getDataMainGui( 'showLines' )
     % draw the sagittal and coronal line
     hold on;
     % draw sag line
-    %%%%%%%%%%%%%%%
-    % if sliderValue is the same as last time skip drawing
-    %%%%%%%%%%%%%%%
     % smaller steps(:0.5:) otherwise the line appears 'dotted'
     plot( get( handles.sliderSag, 'Value' ), 1:0.5:getDataMainGui( 'traColumns' ), 'g-','linewidth', getDataMainGui( 'lineWidth' ) );
 
@@ -147,6 +144,12 @@ if newVal ~= -1
     % set new static text
     files = getDataMainGui( 'files' );
     set( handles.currImage, 'String', files( newVal ).name );
+    
+    % update testView in adjustGrayScale(if the figure is visible)
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 % == 0 means "no its not empty"
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'tra', image );
+    end
 end
 
 updateTraLines( handles );
@@ -161,10 +164,8 @@ set( handles.sliderTra, 'Value', newVal );
 
 % draw new image
 updateTraImg( newVal, handles );
-
-% wenn daten konsisten sind kann hier auch einfach nur -1 übergeben werden
-updateSagImg( get( handles.sliderSag, 'Value' ), handles );
-updateCorImg( get( handles.sliderCor, 'Value' ), handles );
+updateSagImg( -1, handles );
+updateCorImg( -1, handles );
 
 
 function updateSagLines( handles )
@@ -195,15 +196,21 @@ function updateSagImg( newVal, handles )
 % calcualte the new image and draw it
 % current or new image?
 if newVal == -1
-    sagImgNew = getDataMainGui( 'currSagImg' );
+    image = getDataMainGui( 'currSagImg' );
 else
-    sagImgNew = getSagImg( newVal );
+    image = getSagImg( newVal );
 end
 
 
 % update data
 if newVal ~= -1
-    setDataMainGui( 'currSagImg', sagImgNew );
+    setDataMainGui( 'currSagImg', image );
+    
+    % update testView in adjustGrayScale
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'sag', image );
+    end
 end
 % END update
 
@@ -218,9 +225,8 @@ set( handles.sliderSag, 'Value', newVal );
 
 % draw new image
 updateSagImg( newVal, handles );
-
-updateTraImg( get( handles.sliderTra, 'Value' ), handles );
-updateCorImg( get( handles.sliderCor, 'Value' ), handles );
+updateTraImg( -1, handles );
+updateCorImg( -1, handles );
 
 
 function updateCorLines( handles )
@@ -250,14 +256,20 @@ function updateCorImg( newVal, handles )
 % calcualte the new image and draw it
 % current or new image?
 if newVal == -1
-    corImgNew = getDataMainGui( 'currCorImg' );
+    image = getDataMainGui( 'currCorImg' );
 else
-    corImgNew = getCorImg( get( handles.sliderCor,'Max' ) + 1 - newVal );
+    image = getCorImg( get( handles.sliderCor,'Max' ) + 1 - newVal );
 end
 
 % update data
 if newVal ~= -1
-    setDataMainGui( 'currCorImg', corImgNew );
+    setDataMainGui( 'currCorImg', image );
+    
+    % update testView in adjustGrayScale
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'cor', image );
+    end
 end
 % END update
 
@@ -272,13 +284,8 @@ set( handles.sliderCor, 'Value', newVal );
 
 % draw new image
 updateCorImg( newVal, handles );
-
-updateTraImg( get( handles.sliderTra, 'Value' ), handles );
-updateSagImg( get( handles.sliderSag, 'Value' ), handles );
-
-
-% --- Executes during object creation, after setting all properties.
-function transversal_CreateFcn(hObject, eventdata, handles)
+updateTraImg( -1, handles );
+updateSagImg( -1, handles );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -484,6 +491,11 @@ setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
 setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'handles'       , handles  );
 
+% defined in diffrent files
+% --- defined in adjustGrayScale.m
+% setDataMainGui( 'hAdjustGrayScale', handles );
+% setDataMainGui( 'fhUpdateTestView', @updateTestView );
+
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
 updateTraLines( handles );
@@ -568,3 +580,22 @@ updateCorLines( handles );
 function grayScale_Callback(hObject, eventdata, handles)
 
 adjustGrayScale;
+
+
+% --- Executes during object creation, after setting all properties.
+function transversal_CreateFcn(hObject, eventdata, handles)
+%show no ticks
+set(gca,'xtick',[]); 
+set(gca,'ytick',[]);
+
+
+% --- Executes during object creation, after setting all properties.
+function sagittal_CreateFcn(hObject, eventdata, handles)
+set(gca,'xtick',[]); 
+set(gca,'ytick',[]);
+
+
+% --- Executes during object creation, after setting all properties.
+function coronal_CreateFcn(hObject, eventdata, handles)
+set(gca,'xtick',[]); 
+set(gca,'ytick',[]);
