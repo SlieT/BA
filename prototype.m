@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 15-Feb-2014 20:26:00
+% Last Modified by GUIDE v2.5 23-Feb-2014 13:39:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -150,6 +150,11 @@ if newVal ~= -1
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'tra', image );
     end
+    % update testView in enhanceContrast(if the figure is visible)
+    if isempty(findobj('type','figure','name','enhanceContrast')) == 0 % == 0 means "no its not empty"
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'tra', image );
+    end
 end
 
 updateTraLines( handles );
@@ -211,6 +216,11 @@ if newVal ~= -1
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'sag', image );
     end
+    % update testView in enhanceContrast
+    if isempty(findobj('type','figure','name','enhanceContrast')) == 0
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'sag', image );
+    end
 end
 % END update
 
@@ -267,6 +277,11 @@ if newVal ~= -1
     
     % update testView in adjustGrayScale
     if isempty(findobj('type','figure','name','adjustGrayScale')) == 0
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'cor', image );
+    end
+    % update testView in adjustGrayScale
+    if isempty(findobj('type','figure','name','enhanceContrast')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'cor', image );
     end
@@ -441,7 +456,7 @@ setDataMainGui( 'scale'         , scale          );
 setDataMainGui( 'lineWidth'     , lineWidth      );
 setDataMainGui( 'defaultImin'   , Imin           );
 setDataMainGui( 'defaultImax'   , Imax           );
-setDataMainGui( 'currImin'      , Imin           );
+setDataMainGui( 'currImin'      , Imin           ); % lowest value over all images
 setDataMainGui( 'currImax'      , Imax           );
 setDataMainGui( 'currIlow'      , Imin           ); % lowest value in image (except 0 see adjustGrayScale applyToImages)
 setDataMainGui( 'currIhigh'     , Imax           );
@@ -580,6 +595,12 @@ updateCorLines( handles );
 function grayScale_Callback(hObject, eventdata, handles)
 
 adjustGrayScale;
+
+
+% --- Executes on button press in enhanceContrast.
+function enhanceContrast_Callback(hObject, eventdata, handles)
+
+enhanceContrast;
 
 
 % --- Executes during object creation, after setting all properties.

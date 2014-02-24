@@ -100,29 +100,33 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 %close all
 
 u = 0/65535;
-o = 2576/65535;
+o = 876/65535; % max(img(:))
+u = 400/65535;
+o = 600/65535;
 
 img = dicomread('test.dcm');
 
+
 %         intensity mapping
-% subplot(1,2,1), imshow(img, [ 0 2576 ]);  % ist das gleiche wie  
+% subplot(1,3,1), imshow(img, [ 0 876 ]);  % ist das gleiche wie  
 % 
 % b = imadjust( img, [ u o ], [ 0 1 ] );     % ist das gleiche wie 
-% subplot(1,2,2), imshow(b);  
-% figure, imhist(b);
-%
+% subplot(1,3,2), imshow(b);  
+% % 
+% % %
 enhImg = im2uint16( mat2gray( img ) );         % das hier ist der standart - ist das gleiche wie 
-% subplot(1,2,2), imshow(enhImg);  
+% subplot(1,3,3), imshow(enhImg);  
 % figure, imhist(enhImg);
+% figure, imhist(b);
 
-%         intensity mapping wheighted towards gamma (gamma < 1 => brighter)
-% c = imadjust( img, [ u o ], [ 0 1 ], 0.5 ); % last value is gamma
+% %         intensity mapping wheighted towards gamma (gamma < 1 => brighter)
+% c = imadjust( img, [ ], [  ], 0.8 ); % last value is gamma
 % subplot(1,3,1), imshow(c);
 % 
-% cd = imadjust( img, [ u o ], [ 0 1 ], 1 );  % last value is gamma
+% cd = imadjust( img, [  ], [  ], 1 );  % last value is gamma
 % subplot(1,3,2), imshow(cd);
 % 
-% d = imadjust( img, [ u o ], [ 0 1 ], 1.5 );  % last value is gamma
+% d = imadjust( img, [  ], [  ], 1.2 );  % last value is gamma
 % subplot(1,3,3), imshow(d);
 % figure, imhist(img);
 % figure, imhist(c);
@@ -190,17 +194,18 @@ enhImg = im2uint16( mat2gray( img ) );         % das hier ist der standart - ist
 %   used Enhanced COMPLEMENT-Image
 % c=1; % 80-100 for brightness else see imhist
 % f = im2double(imcomplement(enhImg));
-% newImg2 = 1.3*(log(1 + f));
+% newImg2 = 1.4*(log(1 + f));
 % newImg2 = im2uint16(newImg2);
 % newImg3 = mat2gray(log(1 + double(imcomplement(img)))); % normal usecase, zeigt gut die brauchbarkeit der methode für diese anwendung
 % newImg3 = im2uint16(newImg3);
-% newImg4 = 2*(log(1 + f));
+% newImg4 = 1.4*(log(1 + f));
 % newImg4 = im2uint16(newImg4);
-% subplot(1,4,1), imshow(newImg2); % no rangeadjustment necessary! no imshow( newimg2, [] )
-% subplot(1,4,2), imshow(newImg3);
-% subplot(1,4,3), imshow(newImg4);
-% subplot(1,4,4), imshow(imcomplement(newImg4)); % img4 hat den dunklen bereich (da complement eigentlich den weißen) gestretcht, 
-%                                                 % dieses beispiel zeigt gut die verwendbarkeit
+% subplot(1,5,1), imshow(f);
+% subplot(1,5,2), imshow(newImg2); % no rangeadjustment necessary! no imshow( newimg2, [] )
+% subplot(1,5,3), imshow(newImg3);
+% subplot(1,5,4), imshow(enhImg); % newImg4
+% subplot(1,5,5), imshow(imcomplement(newImg4)); % img4 hat den dunklen bereich (da complement eigentlich den weißen) gestretcht, 
+                                                % dieses beispiel zeigt gut die verwendbarkeit
 % figure, imhist(enhImg);
 % figure, imhist(newImg2);
 % figure, imhist(newImg3);
@@ -236,10 +241,10 @@ enhImg = im2uint16( mat2gray( img ) );         % das hier ist der standart - ist
 
 
 % adapthisteq sieht auch ganz gut aus (teilt das bild in kleine tiles auf und ehnaced auf ihnen den kontrast)
-figure, imshow(adapthisteq(enhImg));
-figure, imshow(enhImg);
-figure, imhist(adapthisteq(enhImg));
-figure, imhist(enhImg);
+% figure, imshow(adapthisteq(enhImg));
+% figure, imshow(enhImg);
+% figure, imhist(adapthisteq(enhImg));
+% figure, imhist(enhImg);
 
 
 %         histogramm matching - histogram equalization tries to create an equal probability of each intensity occurring.
