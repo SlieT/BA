@@ -393,6 +393,16 @@ elseif currVal == 4  % Logarithmic transformation
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
     set( handles.infoText   , 'string', 'To enhance the contrast of bright pixels COMPLEMENT the image first, because applying the logarithmic transformation will expand values of dark pixels in an image while compressing the bright pixels. Method: c*(log(1 + image))' );
+elseif currVal == 5  % Contrast-stretching transformation
+    setappdata(handles.enhanceContrast, 'currMethod', 'stretch' );
+    set( handles.valuePanel , 'visible', 'on' );
+    set( handles.textVal1   , 'string', 'E');
+    set( handles.val1       , 'string', '4');
+    set( handles.textVal2   , 'string', 'm or pixelToM');
+    set( handles.val2       , 'string', 'see tooltip');
+    set( handles.textVal2   , 'tooltipString', 'if m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/65535).');
+    set( handles.val2       , 'tooltipString', 'if m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/65535).');
+    set( handles.infoText   , 'string', 'Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values(click on this text to get more help). Method: 1/(1 + (m/(f + eps))^E)' );
 else                 
 
 end

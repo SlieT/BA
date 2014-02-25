@@ -212,23 +212,64 @@ enhImg = im2uint16( mat2gray( img ) );         % das hier ist der standart - ist
 % figure, imhist(newImg4);
 
 
-%         contrast-stretching
+%         Contrast-Stretching Transformations
+% http://www.cs.uregina.ca/Links/class-info/425/Lab3/
+% Contrast-stretching transformations increase the contrast between a
+% certain area (m)
+% You end up with everything darker darks being a lot darker and everything lighter being a lot lighter, with only a few 
+% levels of gray around the level of interest.
 % E controls the slope of the function and m is the mid-line where you want to switch from dark values to light values
-% f = im2double(enhImg);
-% %mean2(f)   % 0.0028
-% %max(f(:))  % 0.0134
-% m = 0.9;  % m is threshold (range is 0 - 1) 
-% % since the information we want is in the bright part of the image we
-% % should choose a treshold near to max and then mostly play with E
-% E = 4;      % the higher E the less grayleves there are
-% newImg = 1./(1 + (m./(f + eps)).^E); % was macht 1.? - es ist der ./ Operator sowie der .^ 
-%                                      % also eine array operation im sinne von C=A./B = C(i,j) = A(i,j)/B(i,j)                                     
-% %newImg2 = im2uint16(newImg);
-% subplot(1,2,1), imshow(newImg, []);
+
+% Contrast-stretching transformations increase the contrast at a
+% certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few 
+% levels of gray around the point of interest.
+% E controls the slope of the function and m is the mid-line where you want
+% to switch from dark values to light values.
+
+
+% E controls the slope of the function and m is the mid-line where you want to switch from dark values to light values
+f = im2double(enhImg);
+%mean2(f)   % 0.0028
+%max(f(:))  % 0.0134
+m = 0.7;  % m is threshold (range is 0 - 1) 
+% since the information we want is in the bright part of the image we
+% should choose a treshold near to max and then mostly play with E
+E = 4;      % the higher E the less grayleves there are
+newImg = 1./(1 + (m./(f + eps)).^E); % was macht 1.? - es ist der ./ Operator sowie der .^ 
+                                     % also eine array operation im sinne von C=A./B = C(i,j) = A(i,j)/B(i,j)                                     
+%newImg2 = im2uint16(newImg);
+%subplot(1,2,1), imshow(newImg, []);
 % figure, imhist(f);
 % figure, imhist(newImg);
 
 
+m = 0.3;
+E = 20;
+x=0:.01:1;
+y = 1./(1 + (m./(x + eps)).^E);
+
+delete(gca)
+%axis manual;
+hold on;
+
+% draw function
+plot(x,y); 
+
+% m
+plot(m,0:0.01:0.5, 'g-', 'linewidth', 2);
+
+% übergang
+plot(0:0.01:m,0.5, 'r-', 'linewidth', 2);
+
+xlabel('x (input image)');
+ylabel('1 / ( 1 + ( m / ( x + eps )) ^ E ) (output image)');
+xlim([ 0 1 ]);
+ylim([ 0 1 ]);
+% Annotate the point (-pi/4, sin(-pi/4))
+text(m , 0.5,'\leftarrow ''m'' and also the point where it switches from dark to bright',...
+     'HorizontalAlignment','left')
+ 
+hold off;
 
 %         histogramm equalisation - due to the high dynamic range properbly
 %         useless (bringt haupstächlich was wenn es ein graues bild ist dh der hauptteil des histogramms in der mitte ist)
