@@ -81,7 +81,7 @@ function E_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of E as text
 %        str2double(get(hObject,'String')) returns contents of E as a double
-E = round(str2double(get( handles.E, 'String' )))
+E = str2double(get( handles.E, 'String' ));
 
 if E < 0
     E = 0;
@@ -131,7 +131,7 @@ updateAxis( handles );
 function updateAxis( handles )
 
 m = str2double(get( handles.m, 'string' ));
-E = str2num(get( handles.E, 'string' ));
+E = str2double(get( handles.E, 'string' ));
 
 x=0:.01:1;
 y = 1./(1 + (m./(x + eps)).^E);

@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 24-Feb-2014 11:59:37
+% Last Modified by GUIDE v2.5 27-Feb-2014 13:03:35
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -198,16 +198,28 @@ if strcmp(method, 'imadjust')
     u = double(min(testImg(:))) / double(65535);
     o = double(max(testImg(:))) / double(65535); 
     testImg = imadjust( testImg, [ u o ], [ 0 1 ] );
-    % min(testImg(:)) % always 0
-    % max(testImg(:)) % always 65535 due to the nature of this operation
+    
 elseif strcmp(method, 'gamma')
     u = double(min(testImg(:))) / double(65535);
     o = double(max(testImg(:))) / double(65535); 
     testImg = imadjust( testImg, [ u o ], [ 0 1 ], str2double( get( handles.val1, 'string' )));
-    % min(testImg(:)) % always 0
-    % max(testImg(:)) % always 65535 due to the nature of this operation
+    
+elseif strcmp(method, 'adapthisteq')
+    M = round(str2double( get( handles.val1, 'string' )));
+    N = round(str2double( get( handles.val2, 'string' )));
+    if M < 2
+        M = 2;
+    elseif N < 2
+        N = 2;
+    end
+    set( handles.val1, 'string', M );
+    set( handles.val2, 'string', N );
+    
+    testImg = adapthisteq( im2uint16( mat2gray( testImg ) ), 'NumTiles', [ M N ] );
+    
 elseif strcmp(method, 'imcomplement')
     testImg = imcomplement( testImg ); 
+    
 elseif strcmp(method, 'log')
     c = str2double( get( handles.val1, 'string' ));
     %%%%% Zeile noch umbedingt anpassen!!!!!!!! %
@@ -215,11 +227,33 @@ elseif strcmp(method, 'log')
     testImg = c*(log( 1 + testImg ));
     %%%%% Zeile noch umbedingt anpassen!!!!!!!! %
     testImg = im2uint16(imcomplement( testImg ));
+    
+elseif strcmp(method, 'stretch')
+    m = str2double( get( handles.val2, 'string' ));
+    if m > 1
+        m = m / 65535;
+        set( handles.val2, 'string', m );
+        return;
+    end
+    E = str2double( get( handles.val1, 'string' ));
+    
+    testImg = im2double(testImg);
+    testImg = 1./(1 + (m./(testImg + eps)).^E);
+    testImg = im2uint16(testImg);
 end
 
 setappdata(handles.enhanceContrast, 'currTestImg', testImg);
-imshow( testImg, [ min(testImg(:)) max(testImg(:)) ] );
 
+% save current zoom state
+xZoom = xlim;
+yZoom = ylim;
+    
+imshow( testImg, [ min(testImg(:)) max(testImg(:)) ] ); 
+
+% reset current zoom state
+xlim(xZoom);
+ylim(yZoom);
+    
 
 % --- Executes on button press in applyToView.
 function applyToView_Callback(hObject, eventdata, handles)
@@ -372,39 +406,53 @@ currVal     = get(hObject,'Value');
 if currVal == 1      % Distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'imadjust' );
     set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string', 'Distributes the given intensities over the hole spectrum of possible ones. Method: imadjust' );
+    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones. Method: imadjust' );
 elseif currVal == 2  % Weighted distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'gamma' );
     set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string', 'Gamma');
-    set( handles.val1       , 'string', '1');
+    set( handles.textVal1   , 'string' , 'Gamma');
+    set( handles.val1       , 'string' , '1');
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
-    set( handles.infoText   , 'string', 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end. Method: imadjust( ... , gamma )' );
-elseif currVal == 3  % Complement 
+    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end. Method: imadjust( ... , gamma )' );
+elseif currVal == 3  % Adaptive histogram equalization
+    setappdata(handles.enhanceContrast, 'currMethod', 'adapthisteq' );
+    set( handles.valuePanel , 'visible', 'on' );
+    set( handles.textVal1   , 'string' , 'M');
+    set( handles.val1       , 'string' , '8');
+    
+    set( handles.textVal2   , 'visible', 'on' );
+    set( handles.textVal2   , 'string' , 'N');
+    set( handles.val2       , 'visible', 'on' );
+    set( handles.val2       , 'string' , '8');
+
+    set( handles.infoText   , 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
+elseif currVal == 4  % Complement 
     setappdata(handles.enhanceContrast, 'currMethod', 'imcomplement' );
     set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string', 'This method complements the current image. Method: imcomplement' );
-elseif currVal == 4  % Logarithmic transformation
+    set( handles.infoText   , 'string' , 'This method complements the current image. Method: imcomplement' );
+elseif currVal == 5  % Logarithmic transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'log' );
     set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string', 'c');
-    set( handles.val1       , 'string', '1.4');
+    set( handles.textVal1   , 'string' , 'c');
+    set( handles.val1       , 'string' , '1.4');
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
-    set( handles.infoText   , 'string', 'To enhance the contrast of bright pixels COMPLEMENT the image first, because applying the logarithmic transformation will expand values of dark pixels in an image while compressing the bright pixels. Method: c*(log(1 + image))' );
-elseif currVal == 5  % Contrast-stretching transformation
+    set( handles.infoText   , 'string' , 'To enhance the contrast of bright pixels COMPLEMENT the image first, because applying the logarithmic transformation will expand values of dark pixels in an image while compressing the bright pixels. Method: c*(log(1 + image))' );
+elseif currVal == 6  % Contrast-stretching transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'stretch' );
     set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string', 'E');
-    set( handles.val1       , 'string', '4');
-    set( handles.textVal2   , 'string', 'm or pixelToM');
-    set( handles.val2       , 'string', 'see tooltip');
+    set( handles.textVal1   , 'string' , 'E');
+    set( handles.val1       , 'string' , '4');
+    
+    set( handles.textVal2   , 'visible', 'on' );
+    set( handles.textVal2   , 'string' , 'm or pixelToM');
     set( handles.textVal2   , 'tooltipString', 'if m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/65535).');
+    
+    set( handles.val2       , 'visible', 'on' );
+    set( handles.val2       , 'string' , 'see tooltip');
     set( handles.val2       , 'tooltipString', 'if m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/65535).');
-    set( handles.infoText   , 'string', 'Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values(click on this text to get more help). Method: 1/(1 + (m/(f + eps))^E)' );
-else                 
-
+    set( handles.infoText   , 'string' , '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values. Method: 1/(1 + (m/(f + eps))^E)' );
 end
 
 
@@ -418,4 +466,15 @@ function chooseMethod_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over infoText.
+function infoText_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to infoText (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if strcmp(get( hObject, 'string' ), '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values. Method: 1/(1 + (m/(f + eps))^E)')
+    contrastStretchHelp
 end
