@@ -179,30 +179,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in restoreDefault.
-function restoreDefault_Callback(hObject, eventdata, handles)
-
-setDataMainGui( 'currImin', getDataMainGui('defaultImin') );
-setDataMainGui( 'currImax', getDataMainGui('defaultImax') );
-setDataMainGui( 'currIlow', getDataMainGui('defaultImin') );
-setDataMainGui( 'currIhigh', getDataMainGui('defaultImax') );
-set(handles.val1,'String', int2str(getDataMainGui('currImin')));
-set(handles.val2,'String', int2str(getDataMainGui('currImax')));
-
-setDataMainGui( 'Images', getDataMainGui( 'defaultImages' ) );
-
-% update hMain
-handles        = getDataMainGui( 'handles' );
-fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
-fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
-fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
-
-% functionEvaluation
-feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
-feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
-feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
-
-
 function imgEnhanced = applyMethods( img, methodHistory, methodHistoryIndex )
     mH      = methodHistory;
     mHIndex = methodHistoryIndex;

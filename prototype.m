@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 23-Feb-2014 13:39:11
+% Last Modified by GUIDE v2.5 05-Mar-2014 14:03:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -145,16 +145,10 @@ if newVal ~= -1
     files = getDataMainGui( 'files' );
     set( handles.currImage, 'String', files( newVal ).name );
     
-    % update testView in adjustGrayScale(if the figure is visible)
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 % == 0 means "no its not empty"
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'tra', image );
-    end
-    % update testView in enhanceContrast(if the figure is visible)
-    if isempty(findobj('type','figure','name','enhanceContrast')) == 0 % == 0 means "no its not empty"
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'tra', image );
-    end
+    % update testView in current figure
+    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+    feval( fhUpdateTestView, 'tra', image );
+
 end
 
 updateTraLines( handles );
@@ -211,16 +205,10 @@ end
 if newVal ~= -1
     setDataMainGui( 'currSagImg', image );
     
-    % update testView in adjustGrayScale
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'sag', image );
-    end
-    % update testView in enhanceContrast
-    if isempty(findobj('type','figure','name','enhanceContrast')) == 0
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'sag', image );
-    end
+    % update testView in current figure
+    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+    feval( fhUpdateTestView, 'sag', image );
+
 end
 % END update
 
@@ -275,16 +263,10 @@ end
 if newVal ~= -1
     setDataMainGui( 'currCorImg', image );
     
-    % update testView in adjustGrayScale
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'cor', image );
-    end
-    % update testView in adjustGrayScale
-    if isempty(findobj('type','figure','name','enhanceContrast')) == 0
-        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-        feval( fhUpdateTestView, 'cor', image );
-    end
+    % update testView in current figure
+    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+    feval( fhUpdateTestView, 'cor', image );
+
 end
 % END update
 
@@ -331,7 +313,7 @@ end
 
 
 % --------------------------------------------------------------------
-function Menu1_Callback(hObject, eventdata, handles)
+function MenuFolder_Callback(hObject, eventdata, handles)
 
 
 % --- Executes when prototype is resized.
@@ -359,7 +341,7 @@ corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
 
 
 % --------------------------------------------------------------------
-function menuOpenDir_Callback(hObject, eventdata, handles)
+function menuFolderLoad_Callback(hObject, eventdata, handles)
 
 currentFolder = uigetdir( pwd );                            % get the current Folder
 
@@ -520,6 +502,41 @@ updateCorLines( handles );
 set( handles.uipanelAdjust, 'Visible', 'on' );
 
 
+% --------------------------------------------------------------------
+function menuFolderSave_Callback(hObject, eventdata, handles)
+% hObject    handle to menuFolderSave (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+lastFolder = getDataMainGui( 'lastFolder' );
+
+% no images loaded yet
+if isempty(lastFolder)
+    warndlg( 'No images available.', 'Attention' );
+    return;
+end
+
+dirName = uigetdir();
+
+% dialogCancel
+if dirName == 0      
+  return;
+end
+
+% save to disk
+files       = getDataMainGui( 'files' );
+numImages   = length( files );
+images      = getDataMainGui( 'Images' );
+lastFolder  = getDataMainGui( 'lastFolder' );
+
+for i = numImages:-1:1
+        fname         = fullfile( dirName, files(i).name );
+        lastFName     = fullfile( lastFolder, files(i).name );
+        metadata      = dicominfo( lastFName );
+        dicomwrite( images(:,:,i), fname, metadata );   
+end
+
+
 % --- Checks and correct the val argument to fit the Min and Max argument
 function newVal = trimToBorder( val, Min, Max )
 if val < Min
@@ -594,11 +611,21 @@ updateCorLines( handles );
 % --- Executes on button press in grayScale.
 function grayScale_Callback(hObject, eventdata, handles)
 
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 % == 0 means "no its not empty"
+    warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
+    return;
+end
+
 adjustGrayScale;
 
 
 % --- Executes on button press in enhanceContrast.
 function enhanceContrast_Callback(hObject, eventdata, handles)
+
+if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 % == 0 means "no its not empty"
+    warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
+    return;
+end
 
 enhanceContrast;
 
