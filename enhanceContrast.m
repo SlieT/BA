@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 27-Feb-2014 13:03:35
+% Last Modified by GUIDE v2.5 05-Mar-2014 13:08:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,13 +64,15 @@ currCorImg  = getappdata( hMain, 'currCorImg' );
 currImin    = getappdata( hMain, 'currImin' );
 currImax    = getappdata( hMain, 'currImax' );
 
-setappdata(handles.enhanceContrast, 'currView'      , 'tra');
-setappdata(handles.enhanceContrast, 'currImg'       , currTraImg);
-setappdata(handles.enhanceContrast, 'currTestImg'   , currTraImg);
-setappdata(handles.enhanceContrast, 'currTraImg'    , currTraImg );
-setappdata(handles.enhanceContrast, 'currSagImg'    , currSagImg );
-setappdata(handles.enhanceContrast, 'currCorImg'    , currCorImg );
-setappdata(handles.enhanceContrast, 'currMethod'    , 'imadjust' );
+setappdata(handles.enhanceContrast, 'currView'              , 'tra');
+setappdata(handles.enhanceContrast, 'currImg'               , currTraImg);
+setappdata(handles.enhanceContrast, 'currTestImg'           , currTraImg);
+setappdata(handles.enhanceContrast, 'currTraImg'            , currTraImg );
+setappdata(handles.enhanceContrast, 'currSagImg'            , currSagImg );
+setappdata(handles.enhanceContrast, 'currCorImg'            , currCorImg );
+setappdata(handles.enhanceContrast, 'currMethod'            , 'imadjust' );
+setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
+setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
 
 imshow( currTraImg, [ currImin, currImax ]);
 
@@ -99,6 +101,16 @@ function varargout = enhanceContrast_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
+% --- Executes when user attempts to close enhanceContrast.
+function enhanceContrast_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to enhanceContrast (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: delete(hObject) closes the figure
+delete(hObject);
+
+
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
@@ -115,7 +127,14 @@ function val1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of val1 as text
 %        str2double(get(hObject,'String')) returns contents of val1 as a double
 
-applyToView( handles, 1 );
+% suppress callback on focusout(/mouse leave + click) if method contains two or more input
+% variables
+methodNumber = get( handles.chooseMethod, 'Value' );
+
+% 3 = Adaptive histogram equalization, 6 = Contrast-stretching transformation
+if methodNumber ~= 3 && methodNumber ~= 6
+    applyToView( handles, 1 );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -136,7 +155,15 @@ function val2_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of val2 as text
 %        str2double(get(hObject,'String')) returns contents of val2 as a double
 
-applyToView( handles, 1 );
+% suppress callback on focusout(/mouse leave + click) if method contains two or more input
+% variables
+methodNumber = get( handles.chooseMethod, 'Value' );
+
+% 3 = Adaptive histogram equalization, 6 = Contrast-stretching transformation
+if methodNumber ~= 3 && methodNumber ~= 6
+    applyToView( handles, 1 );
+end
+
     
 
 % --- Executes during object creation, after setting all properties.
@@ -155,7 +182,6 @@ end
 % --- Executes on button press in restoreDefault.
 function restoreDefault_Callback(hObject, eventdata, handles)
 
-
 setDataMainGui( 'currImin', getDataMainGui('defaultImin') );
 setDataMainGui( 'currImax', getDataMainGui('defaultImax') );
 setDataMainGui( 'currIlow', getDataMainGui('defaultImin') );
@@ -164,9 +190,6 @@ set(handles.val1,'String', int2str(getDataMainGui('currImin')));
 set(handles.val2,'String', int2str(getDataMainGui('currImax')));
 
 setDataMainGui( 'Images', getDataMainGui( 'defaultImages' ) );
-
-% close this figure
-close;
 
 % update hMain
 handles        = getDataMainGui( 'handles' );
@@ -180,29 +203,106 @@ feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
 feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
 
 
+function imgEnhanced = applyMethods( img, methodHistory, methodHistoryIndex )
+    mH      = methodHistory;
+    mHIndex = methodHistoryIndex;
+
+% apply previous methods
+    for i = 1:1:mHIndex;
+        mName = mH{i}(1);
+        
+        if strcmp(mName, 'imadjust')
+            u       = mH{i}(2); 
+            o       = mH{i}(3);
+            u = u{1}(1); o = o{1}(1);
+            img = imadjust( img, [ u o ], [ 0 1 ] );
+        
+        elseif strcmp(mName, 'gamma')
+            u       = mH{i}(2);
+            o       = mH{i}(3); 
+            g       = mH{i}(4);
+            u = u{1}(1); o = o{1}(1); g = g{1}(1);
+            img = imadjust( img, [ u o ], [ 0 1 ], g );
+            
+        elseif strcmp(mName, 'adapthisteq')    
+            M       = mH{i}(2);
+            N       = mH{i}(3);
+            M = M{1}(1); N = N{1}(1);
+            img = adapthisteq( img , 'NumTiles', [ M N ] );
+            
+        elseif strcmp(mName, 'imcomplement')
+            img = imcomplement( img );     
+        
+       	elseif strcmp(mName, 'log')
+            c    	= mH{i}(2);
+            c = c{1}(1);
+            img	= im2double( img );
+            img	= c*(log( 1 + img ));
+            img	= im2uint16( img );
+        elseif strcmp(mName, 'stretch')
+            m       = mH{i}(2);
+            E       = mH{i}(3);
+            m = m{1}(1); E = E{1}(1);
+            img = im2double(img);
+            img = 1./(1 + (m./(img + eps)).^E);
+            img = im2uint16(img);  
+ 
+        end 
+    end
+    
+    imgEnhanced = img;
+
+
 % --- applies to view
 function applyToView( handles, applyMethod )
-% get current image
-testImg = getappdata(handles.enhanceContrast, 'currImg' );
 
+% image or view change, or method undo
 if applyMethod == 0
-    imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]); 
-    setappdata(handles.enhanceContrast, 'currImg', testImg);
+    % get current image
+    currImg = getappdata(handles.enhanceContrast, 'currImg' );
+    setappdata(handles.enhanceContrast, 'currImg', currImg );
+    
+    testImg = currImg;
+    mH      = getappdata(handles.enhanceContrast, 'methodHistory' );
+    mHIndex = getappdata(handles.enhanceContrast, 'methodHistoryIndex' );
+    
+    % no previous methods
+    if mHIndex == 0
+        imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]); 
+        setappdata(handles.enhanceContrast, 'currTestImg', testImg );
+        return 
+    end
+    
+    % apply previous methods
+    testImg = applyMethods( testImg, mH, mHIndex );
+ 
+    imshow( testImg, [ 0 65535 ]);     
+    %imshow( testImg, [ min(testImg(:)) max(testImg(:)) ]); 
+    setappdata(handles.enhanceContrast, 'currTestImg', testImg );
     return
 end
 
 % get current method
 method  = getappdata(handles.enhanceContrast, 'currMethod' );
+% get current test-image
+testImg = getappdata(handles.enhanceContrast, 'currTestImg' );
+
+mH      = getappdata( handles.enhanceContrast, 'methodHistory' );
+mHIndex = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
+mHIndex = mHIndex + 1;
 
 if strcmp(method, 'imadjust')
-    u = double(min(testImg(:))) / double(65535);
-    o = double(max(testImg(:))) / double(65535); 
-    testImg = imadjust( testImg, [ u o ], [ 0 1 ] );
+    u               = double(min(testImg(:))) / double(65535);
+    o               = double(max(testImg(:))) / double(65535);
+    mH{ mHIndex }   = { 'imadjust', u, o };
+    testImg         = imadjust( testImg, [ u o ], [ 0 1 ] );
     
 elseif strcmp(method, 'gamma')
-    u = double(min(testImg(:))) / double(65535);
-    o = double(max(testImg(:))) / double(65535); 
-    testImg = imadjust( testImg, [ u o ], [ 0 1 ], str2double( get( handles.val1, 'string' )));
+    u               = double(min(testImg(:))) / double(65535);
+    o               = double(max(testImg(:))) / double(65535); 
+    g               = str2double( get( handles.val1, 'string' ));
+    mH{ mHIndex }   = { 'gamma', u, o, g };
+    testImg = imadjust( testImg, [ u o ], [ 0 1 ], g );
     
 elseif strcmp(method, 'adapthisteq')
     M = round(str2double( get( handles.val1, 'string' )));
@@ -215,18 +315,19 @@ elseif strcmp(method, 'adapthisteq')
     set( handles.val1, 'string', M );
     set( handles.val2, 'string', N );
     
-    testImg = adapthisteq( im2uint16( mat2gray( testImg ) ), 'NumTiles', [ M N ] );
+    mH{ mHIndex }   = { 'adapthisteq', M, N };
+    testImg         = adapthisteq( testImg , 'NumTiles', [ M N ] );
     
 elseif strcmp(method, 'imcomplement')
-    testImg = imcomplement( testImg ); 
+    mH{ mHIndex }   = { 'imcomplement' };
+    testImg         = imcomplement( testImg ); 
     
 elseif strcmp(method, 'log')
-    c = str2double( get( handles.val1, 'string' ));
-    %%%%% Zeile noch umbedingt anpassen!!!!!!!! %
-    testImg = im2double(imcomplement( im2uint16( mat2gray( testImg ) ) ));
-    testImg = c*(log( 1 + testImg ));
-    %%%%% Zeile noch umbedingt anpassen!!!!!!!! %
-    testImg = im2uint16(imcomplement( testImg ));
+    c               = str2double( get( handles.val1, 'string' ));
+    testImg         = im2double( testImg );
+    testImg         = c*(log( 1 + testImg ));
+    mH{ mHIndex }   = { 'log', c };
+    testImg         = im2uint16( testImg );
     
 elseif strcmp(method, 'stretch')
     m = str2double( get( handles.val2, 'string' ));
@@ -240,17 +341,21 @@ elseif strcmp(method, 'stretch')
     testImg = im2double(testImg);
     testImg = 1./(1 + (m./(testImg + eps)).^E);
     testImg = im2uint16(testImg);
+    mH{ mHIndex }   = { 'stretch', m, E };
 end
 
-setappdata(handles.enhanceContrast, 'currTestImg', testImg);
+setappdata(handles.enhanceContrast, 'methodHistory'         , mH );
+setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , mHIndex );
+setappdata(handles.enhanceContrast, 'currTestImg'           , testImg);
 
 % save current zoom state
 xZoom = xlim;
 yZoom = ylim;
     
-imshow( testImg, [ min(testImg(:)) max(testImg(:)) ] ); 
+imshow( testImg, [ 0 65535 ]); 
+%imshow( testImg, [ min(testImg(:)) max(testImg(:)) ]); 
 
-% reset current zoom state
+% undo current zoom state
 xlim(xZoom);
 ylim(yZoom);
     
@@ -270,29 +375,23 @@ function applyToImages_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%newCurrImin = min(:) bei applytoImages muss gesetzt werden
-
-min         = str2double(get(handles.val1,'String'));
-max         = str2double(get(handles.val2,'String'));
 images      = getDataMainGui( 'Images' );
-
-setDataMainGui( 'currIlow', min );
-setDataMainGui( 'currIhigh', max );
-
 s           = size( images );
 numImages   = s( 3 );
+mH          = getappdata( handles.enhanceContrast, 'methodHistory' );
+mHIndex     = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
 
+
+% apply methodHistory to all images
 for i = numImages:-1:1
-    img = images(:,:,i);
-    img = setToZero( img, 'min', min );
-    img = setToZero( img, 'max', max );
+    img           = images(:,:,i);
+    img           = applyMethods( img, mH, mHIndex );
     images(:,:,i) = img(:,:);
 end
 
 setDataMainGui( 'Images', images );
-
-% close this figure
-close;
+setDataMainGui( 'currImin', 0 );
+setDataMainGui( 'currImax', 65535 );
 
 % update hMain
 handles        = getDataMainGui( 'handles' );
@@ -373,21 +472,29 @@ if strcmp(currView,view)
 
     applyToView( handles, 0 );
 
-    % reset current zoom state
+    % undo current zoom state
     xlim(xZoom);
     ylim(yZoom);
 end
 
 
-% --- Executes on button press in reset.
-function reset_Callback(hObject, eventdata, handles)
+% --- Executes on button press in undo.
+function undo_Callback(hObject, eventdata, handles)
 
-possibleMin = getappdata(handles.enhanceContrast, 'possibleMin' );
-possibleMax = getappdata(handles.enhanceContrast, 'possibleMax' );
-currIminStr = num2str( possibleMin );
-currImaxStr = num2str( possibleMax );
-set( handles.val1, 'String', currIminStr );
-set( handles.val2, 'String', currImaxStr );
+mH      = getappdata(handles.enhanceContrast, 'methodHistory' );
+mHIndex = getappdata(handles.enhanceContrast, 'methodHistoryIndex' );
+
+if mHIndex > 0
+    mH{ mHIndex } = {};
+    mHIndex = mHIndex - 1;
+
+    setappdata(handles.enhanceContrast, 'methodHistory'         , mH );
+    setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , mHIndex );
+    
+else
+    disp('No used method which could be undone.')
+end
+
 
 applyToView( handles, 0 );
 

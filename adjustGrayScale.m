@@ -254,9 +254,6 @@ set(handles.newMax,'String', int2str(getDataMainGui('currImax')));
 
 setDataMainGui( 'Images', getDataMainGui( 'defaultImages' ) );
 
-% close this figure
-close;
-
 % update hMain
 handles        = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
@@ -316,9 +313,6 @@ end
 
 setDataMainGui( 'Images', images );
 
-% close this figure
-close;
-
 % update hMain
 handles        = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
@@ -329,8 +323,6 @@ fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
 feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
 feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
 feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
-
-
 
 
 % --- Executes on selection change in chooseView.
