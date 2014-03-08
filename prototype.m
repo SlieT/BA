@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 05-Mar-2014 14:03:11
+% Last Modified by GUIDE v2.5 07-Mar-2014 16:59:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -145,10 +145,11 @@ if newVal ~= -1
     files = getDataMainGui( 'files' );
     set( handles.currImage, 'String', files( newVal ).name );
     
-    % update testView in current figure
-    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-    feval( fhUpdateTestView, 'tra', image );
-
+    % update testView in current figure if figure is live
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'tra', image );
+    end
 end
 
 updateTraLines( handles );
@@ -205,10 +206,11 @@ end
 if newVal ~= -1
     setDataMainGui( 'currSagImg', image );
     
-    % update testView in current figure
-    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-    feval( fhUpdateTestView, 'sag', image );
-
+    % update testView in current figure if figure is live
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'sag', image );
+    end
 end
 % END update
 
@@ -263,10 +265,11 @@ end
 if newVal ~= -1
     setDataMainGui( 'currCorImg', image );
     
-    % update testView in current figure
-    fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
-    feval( fhUpdateTestView, 'cor', image );
-
+    % update testView in current figure if figure is live
+    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+        fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
+        feval( fhUpdateTestView, 'cor', image );
+    end
 end
 % END update
 
@@ -324,7 +327,12 @@ function sagImgNew = getSagImg( value )
 Images              = getDataMainGui( 'Images' ); 
 sagImg              = Images(:,value,:);                           % vertical slider sliderTop = rightEnd sliderBottom = leftEnd
 sagImgSize          = size( sagImg ); 
-sagImgReshape       = reshape( sagImg, [ sagImgSize(1), sagImgSize(3) ]);   % original Img without manipulation
+amountImages        = 1;
+% check if only one images is in Images
+if numel(sagImgSize) > 2
+    amountImages = sagImgSize(3);
+end 
+sagImgReshape       = reshape( sagImg, [ sagImgSize(1), amountImages ]);   % original Img without manipulation
 manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
 nearestNeighbour    = makeresampler( 'cubic','fill' );     
 sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
@@ -334,7 +342,12 @@ function corImgNew = getCorImg( value )
 Images              = getDataMainGui( 'Images' ); 
 corImg              = Images(value,:,:);
 corImgSize          = size( corImg ); 
-corImgReshape       = reshape( corImg, [ corImgSize(2), corImgSize(3) ]);       % original Img without manipulation
+amountImages        = 1;
+% check if only one images is in Images
+if numel(corImgSize) > 2
+    amountImages = corImgSize(3);
+end 
+corImgReshape       = reshape( corImg, [ corImgSize(2), amountImages ]);       % original Img without manipulation
 manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
 nearestNeighbour    = makeresampler( 'cubic','fill' );     
 corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
@@ -647,3 +660,79 @@ set(gca,'ytick',[]);
 function coronal_CreateFcn(hObject, eventdata, handles)
 set(gca,'xtick',[]); 
 set(gca,'ytick',[]);
+
+
+% --- Executes on button press in deleteImage.
+function deleteImage_Callback(hObject, eventdata, handles)
+% hObject    handle to deleteImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+images      = getDataMainGui( 'Images' ); % array
+files       = getDataMainGui( 'files' );  % struct
+sldTra   = get( handles.sliderTra, 'Value' );
+sldSag   = get( handles.sliderTra, 'Value' );
+sldCor   = get( handles.sliderTra, 'Value' );
+
+% check if at least 2 images are available
+sizeImages = size( images );
+if numel(sizeImages) == 2
+    set( handles.sliderTra, 'Max', 1 );
+    warndlg( 'Only one image left - can''t delete.', 'Deletionwarning' );
+    
+    return;
+end
+
+% delete image
+images(:,:,sldTra) = [];
+
+% delete file
+files(sldTra) = [];
+
+setDataMainGui( 'files', files );
+setDataMainGui( 'Images', images );
+
+% update Slider
+sizeImages = size( images );
+if numel(sizeImages) == 2
+    numImages = 1;
+else
+    sizeImages  = size( images );
+    numImages   = sizeImages(3);
+end
+
+sliderStep  = 1 / numImages;
+
+% current sliderValue greater number of images (has been reduced)
+if sldTra > numImages
+    sldTra = numImages;
+end
+
+set( handles.sliderTra, 'Max', numImages );
+set( handles.sliderTra, 'SliderStep', [ sliderStep sliderStep ] );
+set( handles.sliderTra, 'Value', sldTra );
+set( handles.sliderSag, 'Value', sldSag );
+set( handles.sliderCor, 'Value', sldCor );
+
+% update currImage text
+set( handles.currImage, 'String', files(sldTra).name );
+
+updateTraImg( sldTra, handles );
+updateSagImg( sldSag, handles );
+updateCorImg( sldCor, handles );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
