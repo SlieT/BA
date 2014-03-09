@@ -356,18 +356,29 @@ s           = size( images );
 numImages   = s( 3 );
 mH          = getappdata( handles.enhanceContrast, 'methodHistory' );
 mHIndex     = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
-
+newMin         = 65535;
+newMax         = 0;
 
 % apply methodHistory to all images
 for i = numImages:-1:1
     img           = images(:,:,i);
     img           = applyMethods( img, mH, mHIndex );
     images(:,:,i) = img(:,:);
+     
+    minImg        = min(img(:));
+    maxImg        = max(img(:));
+    if minImg < newMin
+        newMin = minImg;
+    elseif maxImg > newMax
+            newMax = maxImg;
+    end
 end
 
 setDataMainGui( 'Images', images );
-setDataMainGui( 'currImin', 0 );
-setDataMainGui( 'currImax', 65535 );
+setDataMainGui( 'currImin', newMin );
+setDataMainGui( 'currImax', newMax );
+setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
+setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
 
 % update hMain
 handles        = getDataMainGui( 'handles' );
@@ -379,8 +390,6 @@ fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
 feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
 feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
 feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
-
-
 
 
 % --- Executes on selection change in chooseView.

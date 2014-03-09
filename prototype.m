@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 07-Mar-2014 16:59:14
+% Last Modified by GUIDE v2.5 09-Mar-2014 17:09:30
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -81,6 +81,26 @@ function varargout = prototype_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+
+
+% --- Executes when user attempts to close prototype.
+function prototype_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to prototype (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% if any figure is live close it
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0
+    henh = getDataMainGui( 'henhanceContrast' );
+    delete(henh.output);
+
+elseif isempty(findobj('type','figure','name','segmentation')) == 0
+    hseg = getDataMainGui( 'hsegmentation' );
+    delete(hseg.output);
+end
+
+% Hint: delete(hObject) closes the figure
+delete(hObject);
 
 
 % --- setData globallike
@@ -146,7 +166,7 @@ if newVal ~= -1
     set( handles.currImage, 'String', files( newVal ).name );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'tra', image );
     end
@@ -207,7 +227,7 @@ if newVal ~= -1
     setDataMainGui( 'currSagImg', image );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'sag', image );
     end
@@ -266,7 +286,7 @@ if newVal ~= -1
     setDataMainGui( 'currCorImg', image );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'cor', image );
     end
@@ -451,10 +471,8 @@ setDataMainGui( 'scale'         , scale          );
 setDataMainGui( 'lineWidth'     , lineWidth      );
 setDataMainGui( 'defaultImin'   , Imin           );
 setDataMainGui( 'defaultImax'   , Imax           );
-setDataMainGui( 'currImin'      , Imin           ); % lowest value over all images
+setDataMainGui( 'currImin'      , Imin           );
 setDataMainGui( 'currImax'      , Imax           );
-setDataMainGui( 'currIlow'      , Imin           ); % lowest value in image (except 0 see adjustGrayScale applyToImages)
-setDataMainGui( 'currIhigh'     , Imax           );
 
 setDataMainGui( 'traSize'       , traSize        );
 setDataMainGui( 'traRows'       , traRows        );
@@ -502,7 +520,7 @@ setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'handles'       , handles  );
 
 % defined in diffrent files
-% --- defined in adjustGrayScale.m
+% --- defined in segmentation.m
 % setDataMainGui( 'hAdjustGrayScale', handles );
 % setDataMainGui( 'fhUpdateTestView', @updateTestView );
 
@@ -621,21 +639,21 @@ updateSagLines( handles );
 updateCorLines( handles );
 
 
-% --- Executes on button press in grayScale.
-function grayScale_Callback(hObject, eventdata, handles)
+% --- Executes on button press in segment.
+function segment_Callback(hObject, eventdata, handles)
 
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0 % == 0 means "no its not empty"
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
 
-adjustGrayScale;
+segmentation;
 
 
 % --- Executes on button press in enhanceContrast.
 function enhanceContrast_Callback(hObject, eventdata, handles)
 
-if isempty(findobj('type','figure','name','adjustGrayScale')) == 0 % == 0 means "no its not empty"
+if isempty(findobj('type','figure','name','segmentation')) == 0 % == 0 means "no its not empty"
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -671,8 +689,8 @@ function deleteImage_Callback(hObject, eventdata, handles)
 images      = getDataMainGui( 'Images' ); % array
 files       = getDataMainGui( 'files' );  % struct
 sldTra   = get( handles.sliderTra, 'Value' );
-sldSag   = get( handles.sliderTra, 'Value' );
-sldCor   = get( handles.sliderTra, 'Value' );
+sldSag   = get( handles.sliderSag, 'Value' );
+sldCor   = get( handles.sliderCor, 'Value' );
 
 % check if at least 2 images are available
 sizeImages = size( images );
@@ -720,19 +738,3 @@ set( handles.currImage, 'String', files(sldTra).name );
 updateTraImg( sldTra, handles );
 updateSagImg( sldSag, handles );
 updateCorImg( sldCor, handles );
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
