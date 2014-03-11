@@ -125,7 +125,7 @@ disp(data);
 function updateTraLines( handles )
 
 axes( handles.transversal );
-handleTraImg = imshow( getDataMainGui( 'currTraImg' ), [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]);
+handleTraImg = imshow( getDataMainGui( 'currTraImg' ) );
 
 
 if getDataMainGui( 'showLines' )
@@ -191,7 +191,7 @@ updateCorImg( -1, handles );
 function updateSagLines( handles )
 
 axes( handles.sagittal );
-handleSagImg = imshow( getDataMainGui( 'currSagImg' ), [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ] );
+handleSagImg = imshow( getDataMainGui( 'currSagImg' ) );
 
 if getDataMainGui( 'showLines' )
     % draw the transversal and coronal line
@@ -251,7 +251,7 @@ updateCorImg( -1, handles );
 
 function updateCorLines( handles )
 axes( handles.coronal );
-handleCorImg = imshow( getDataMainGui( 'currCorImg' ), [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ] );
+handleCorImg = imshow( getDataMainGui( 'currCorImg' ) );
 
 if getDataMainGui( 'showLines' )
     % draw the transversal and sagittal line
@@ -442,17 +442,14 @@ set( handles.sliderCor, 'Value'     , halfR );          % same for half
 
 
 % display the first image
-%%% see *a
 flip            = -1;               % flip upside down
 scale           = 1;                % scale factor
 %%%               % starting from the bottom
 lineWidth       = 1;
 % transversal
-Imin            = min(Images(:));   % since a Matrix is represented as a vecotor we can use min(matrix(:))
-Imax            = max(Images(:));
 traImg          = Images(:,:,firstImg);
 axes(handles.transversal);
-imshow( traImg, [ Imin, Imax ]);    
+imshow( traImg );    
 
 
 traSize         = size( traImg );
@@ -469,10 +466,6 @@ setDataMainGui( 'files'         , files          );
 setDataMainGui( 'flip'          , flip           );
 setDataMainGui( 'scale'         , scale          );
 setDataMainGui( 'lineWidth'     , lineWidth      );
-setDataMainGui( 'defaultImin'   , Imin           );
-setDataMainGui( 'defaultImax'   , Imax           );
-setDataMainGui( 'currImin'      , Imin           );
-setDataMainGui( 'currImax'      , Imax           );
 
 setDataMainGui( 'traSize'       , traSize        );
 setDataMainGui( 'traRows'       , traRows        );
@@ -482,7 +475,7 @@ setDataMainGui( 'currTraImg'    , traImg         );
 % sagittal
 sagImgNew       = getSagImg( halfC );
 axes(handles.sagittal);
-imshow( sagImgNew, [ Imin, Imax ]); 
+imshow( sagImgNew ); 
 sagSize         = size( sagImgNew );
 sagRows         = sagSize(1);
 sagColumns      = sagSize(2);
@@ -494,7 +487,7 @@ setDataMainGui( 'currSagImg'    , sagImgNew      );
 % coronal
 corImgNew = getCorImg( halfR );
 axes( handles.coronal );
-imshow( corImgNew, [ Imin, Imax ] );
+imshow( corImgNew );
 corSize         = size( corImgNew );
 corRows         = corSize(1);
 corColumns      = corSize(2);

@@ -61,8 +61,8 @@ hMain = getappdata(0, 'hMainGui');
 currTraImg  = getappdata( hMain, 'currTraImg' );
 currSagImg  = getappdata( hMain, 'currSagImg' );
 currCorImg  = getappdata( hMain, 'currCorImg' );
-currImin    = getappdata( hMain, 'currImin' );
-currImax    = getappdata( hMain, 'currImax' );
+rows        = getDataMainGui( 'traRows' );
+columns     = getDataMainGui( 'traColumns' );
 
 setappdata(handles.segmentation, 'currView'              , 'tra');
 setappdata(handles.segmentation, 'currImg'               , currTraImg);
@@ -70,11 +70,14 @@ setappdata(handles.segmentation, 'currTestImg'           , currTraImg);
 setappdata(handles.segmentation, 'currTraImg'            , currTraImg );
 setappdata(handles.segmentation, 'currSagImg'            , currSagImg );
 setappdata(handles.segmentation, 'currCorImg'            , currCorImg );
-setappdata(handles.segmentation, 'currMethod'            , 'imadjust' );
+setappdata(handles.segmentation, 'currMethod'            , 'trimToRect' );
+
+set( handles.val2 , 'string' , strcat( num2str(rows), ',', num2str(columns) ) );
+
 setappdata(handles.segmentation, 'methodHistory'         , {} );
 setappdata(handles.segmentation, 'methodHistoryIndex'    , 0 );
 
-imshow( currTraImg, [ currImin, currImax ]);
+imshow( currTraImg );
 
 % set global data
 setDataMainGui( 'hsegmentation', handles );
@@ -82,6 +85,8 @@ setDataMainGui( 'fhUpdateTestView', @updateTestView );
 
 % Update handles structure
 guidata(hObject, handles);
+
+drawTrimToRect( handles );
 
 % clear the command line
 clc;
@@ -131,8 +136,13 @@ function val1_Callback(hObject, eventdata, handles)
 % variables
 methodNumber = get( handles.chooseMethod, 'Value' );
 
-% 2 = New interval of gray levels
-if methodNumber ~= 2
+% 1 = Trim to image section
+if methodNumber == 1 && checkTrimToRect( handles )
+    drawTrimToRect( handles );
+end
+
+% 1 = Trim to image section, 2 = New interval of gray levels
+if methodNumber ~= 1 && methodNumber ~= 2
     applyToView( handles, 1 );
 end
 
@@ -159,8 +169,13 @@ function val2_Callback(hObject, eventdata, handles)
 % variables
 methodNumber = get( handles.chooseMethod, 'Value' );
 
-% 2 = New interval of gray levels
-if methodNumber ~= 2
+% 1 = Trim to image section
+if methodNumber == 1 && checkTrimToRect( handles )
+    drawTrimToRect( handles );
+end
+
+% 1 = Trim to image section, 2 = New interval of gray levels
+if methodNumber ~= 1 && methodNumber ~= 2
     applyToView( handles, 1 );
 end
 
@@ -179,7 +194,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-function imgSegmented = applyMethods( img, methodHistory, methodHistoryIndex )
+function imgSegmented = applyMethods( img, methodHistory, methodHistoryIndex, handles )
     mH      = methodHistory;
     mHIndex = methodHistoryIndex;
 
@@ -187,12 +202,11 @@ function imgSegmented = applyMethods( img, methodHistory, methodHistoryIndex )
     for i = 1:1:mHIndex;
         mName = mH{i}(1);
         
-        if strcmp(mName, 'imadjust')
-%             u       = mH{i}(2); 
-%             o       = mH{i}(3);
-%             u = u{1}(1); o = o{1}(1);
-%             img = imadjust( img, [ u o ], [ 0 1 ] );
-%         
+        if strcmp(mName, 'trimToRect')
+            points       = mH{i}(2);
+            points       = points{1};
+            img          = setToZero( img, 'rec', points, handles );     
+            
         elseif strcmp(mName, 'grayScale')
             newMin       = mH{i}(2); 
             newMax       = mH{i}(3);
@@ -204,14 +218,101 @@ function imgSegmented = applyMethods( img, methodHistory, methodHistoryIndex )
     
     imgSegmented = img;
 
-    
-% --- set pixel lower or higher then val to 0 
-function newImg = setToZero( image, minMax, val )
 
-if strcmpi('min', minMax)
+% --- check if the inputvalues are valid 
+function check = checkTrimToRect( handles )
+    p1 = strsplit( get( handles.val1, 'string' ), ',' );
+    p2 = strsplit( get( handles.val2, 'string' ), ',' );
+    
+    % wrong syntax
+    if numel(p1) == 1 || numel(p2) == 1
+        warndlg( 'Wrong input, syntax of point: x,y.', 'Attention' );
+        check = false;
+        return;
+    end
+    
+    p1x = round(str2double( p1{1} ));
+    p1y = round(str2double( p1{2} ));
+    p2x = round(str2double( p2{1} ));
+    p2y = round(str2double( p2{2} ));
+    rows        = getDataMainGui( 'traRows' );
+    columns     = getDataMainGui( 'traColumns' );
+    
+    % values within the image?
+    if p1x < p2x && p1x > 0 && p2x < rows+1 && p2x > 0 ...
+        && p1y < p2y && p1y > 0 && p2y < columns+1 && p2y > 0
+        % set values
+        set( handles.val1, 'string', strcat( num2str(p1x), ',', num2str(p1y) ));
+        set( handles.val2, 'string', strcat( num2str(p2x), ',', num2str(p2y) ));
+        check = true;
+        return;
+    else
+        warndlg( 'Wrong input, values need to be within the image and point one is smaller then point two.', 'Attention' );
+        check = false;
+        return;
+    end
+
+
+% --- draw the rectangle into the image    
+function drawTrimToRect( handles )
+    currTestImg = getappdata(handles.segmentation, 'currTestImg' );
+    % save current zoom state
+    xZoom = xlim;
+    yZoom = ylim;
+    
+    imshow( currTestImg );
+
+    % undo current zoom state
+    xlim(xZoom);
+    ylim(yZoom);
+    
+    Isize     = getDataMainGui( 'Isize' );
+    numImages = Isize(3); 
+    p1        = strsplit( get( handles.val1, 'string' ), ',' );
+    p2        = strsplit( get( handles.val2, 'string' ), ',' );
+    p1x  	  = str2double( p1{1} );
+    p1y       = str2double( p1{2} );
+    p2x       = str2double( p2{1} );
+    p2y       = str2double( p2{2} );
+    
+    % rectangle( x, y, width, height )
+    currView = get( handles.chooseView, 'Value' );
+    if currView == 1       % transversal
+        rectangle( 'Position', [ p1x  p1y p2x-p1x  p2y-p1y ], 'EdgeColor', 'r' );
+    elseif currView == 2  % sagittal
+        rectangle( 'Position', [ p1y 1 p2y-p1y  numImages ], 'EdgeColor', 'r' );
+    else                  % coronal
+        rectangle( 'Position', [ p1x 1 p2x-p1x  numImages ], 'EdgeColor', 'r' );
+    end
+        
+    
+    
+% --- set pixel to 0 
+function newImg = setToZero( image, minMaxRec, val, handles )
+
+if strcmpi( 'min', minMaxRec )
     image( image < val ) = 0;
-elseif strcmpi('max', minMax)
+    
+elseif strcmpi( 'max', minMaxRec )
     image( image > val ) = 0;
+    
+elseif strcmpi( 'rec', minMaxRec )
+    sImg        = size(image); % depends on view
+    mask        = zeros( sImg(1), sImg(2) );
+    mask        = im2uint16( mask );
+    
+    currView    = get( handles.chooseView, 'Value' );
+    % if trans
+    if currView == 1
+        mask( val(2):val(4), val(1):val(3) ) = 1;
+    elseif currView == 2
+        mask( 1:sImg(1), val(2):val(4) ) = 1;
+    elseif currView == 3
+        mask( 1:sImg(1), val(1):val(3) ) = 1;
+    end
+    % pointwise multiply with 0 or 1 erases or keeps the pixel
+    image = image .* mask;
+    
 end
 
 newImg = image;
@@ -219,9 +320,6 @@ newImg = image;
 
 % --- applies to view
 function applyToView( handles, applyMethod )
-
-currMin = getDataMainGui( 'currImin' );
-currMax = getDataMainGui( 'currImax' );
 
 % image or view change, or method undo
 if applyMethod == 0
@@ -235,15 +333,15 @@ if applyMethod == 0
     
     % no previous methods
     if mHIndex == 0
-        imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]); 
+        imshow( testImg ); 
         setappdata(handles.segmentation, 'currTestImg', testImg );
         return 
     end
     
     % apply previous methods
-    testImg = applyMethods( testImg, mH, mHIndex );
+    testImg = applyMethods( testImg, mH, mHIndex, handles );
  
-    imshow( testImg, [ currMin currMax ]);     
+    imshow( testImg );     
     setappdata(handles.segmentation, 'currTestImg', testImg );
     return
 end
@@ -257,12 +355,18 @@ mH      = getappdata( handles.segmentation, 'methodHistory' );
 mHIndex = getappdata( handles.segmentation, 'methodHistoryIndex' );
 mHIndex = mHIndex + 1;
 
-if strcmp(method, 'imadjust')
-%     u               = double(min(testImg(:))) / double(65535);
-%     o               = double(max(testImg(:))) / double(65535);
-%     mH{ mHIndex }   = { 'imadjust', u, o };
-%     testImg         = imadjust( testImg, [ u o ], [ 0 1 ] );
-%     
+if strcmp(method, 'trimToRect')
+    p1              = strsplit( get( handles.val1, 'string' ), ',' );
+    p2              = strsplit( get( handles.val2, 'string' ), ',' );
+    
+    p1x             = str2double( p1{1} );
+    p1y             = str2double( p1{2} );
+    p2x             = str2double( p2{1} );
+    p2y             = str2double( p2{2} );
+ 
+    mH{ mHIndex }   = { 'trimToRect', [ p1x p1y p2x p2y ] };
+    testImg = setToZero( testImg, 'rec', [ p1x p1y p2x p2y ], handles );
+
 elseif strcmp(method, 'grayScale')
     newMin          = round(str2double( get( handles.val1, 'string' )));
     newMax          = round(str2double( get( handles.val2, 'string' )));
@@ -295,7 +399,7 @@ setappdata(handles.segmentation, 'currTestImg'           , testImg);
 xZoom = xlim;
 yZoom = ylim;
     
-imshow( testImg, [ currMin currMax ]); 
+imshow( testImg ); 
 
 % undo current zoom state
 xlim(xZoom);
@@ -327,13 +431,13 @@ mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndex' );
 % apply methodHistory to all images
 for i = numImages:-1:1
     img           = images(:,:,i);
-    img           = applyMethods( img, mH, mHIndex );
+    img           = applyMethods( img, mH, mHIndex, handles );
     images(:,:,i) = img(:,:);
 end
 
 setDataMainGui( 'Images', images );
-setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
-setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
+setappdata( handles.segmentation, 'methodHistory'         , {} );
+setappdata( handles.segmentation, 'methodHistoryIndex'    , 0 );
 
 % update hMain
 handles        = getDataMainGui( 'handles' );
@@ -370,6 +474,11 @@ end
 
 setappdata(handles.segmentation, 'currImg', currImg);
 applyToView( handles, 0 );
+
+% current method trimToRect? draw rect
+if get( handles.chooseMethod, 'Value' ) == 1
+    drawTrimToRect( handles );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -413,7 +522,12 @@ if strcmp(currView,view)
     yZoom = ylim;
 
     applyToView( handles, 0 );
-
+    
+    % current method trimToRect? draw rect
+    if get( handles.chooseMethod, 'Value' ) == 1
+        drawTrimToRect( handles );
+    end
+    
     % undo current zoom state
     xlim(xZoom);
     ylim(yZoom);
@@ -434,7 +548,8 @@ if mHIndex > 0
     setappdata(handles.segmentation, 'methodHistoryIndex'    , mHIndex );
     
 else
-    disp('No used method which could be undone.')
+    warndlg( 'No used method which could be undone.', 'Attention' );
+    return;
 end
 
 
@@ -452,10 +567,20 @@ function chooseMethod_Callback(hObject, eventdata, handles)
 
 currVal     = get(hObject,'Value'); 
 
-if currVal == 1      % asdf
-%     setappdata(handles.segmentation, 'currMethod', 'imadjust' );
-	set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string' , 'asdf' );
+if currVal == 1      % Trim to image section *
+    setappdata(handles.segmentation, 'currMethod', 'trimToRect' );
+    set( handles.valuePanel , 'visible', 'on' );
+    set( handles.textVal1   , 'visible', 'on' );
+    set( handles.val1       , 'visible', 'on' );
+    set( handles.textVal1   , 'string' , 'Point 1');
+    set( handles.val1       , 'string' , '1,1');
+    set( handles.textVal2   , 'visible', 'on' );
+    set( handles.val2       , 'visible', 'on' );
+    set( handles.textVal2   , 'string' , 'Point 2' );
+    rows        = getDataMainGui( 'traRows' );
+    columns     = getDataMainGui( 'traColumns' );
+    set( handles.val2       , 'string' , strcat( num2str(rows), ',', num2str(columns) ) );
+    set( handles.infoText   , 'string' , 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
 elseif currVal == 2  % New interval of gray levels
     setappdata(handles.segmentation, 'currMethod', 'grayScale' );
     set( handles.valuePanel , 'visible', 'on' );
@@ -468,6 +593,14 @@ elseif currVal == 2  % New interval of gray levels
     set( handles.textVal2   , 'string' , 'New max' );
     set( handles.val2       , 'string' , 'Max' );
     set( handles.infoText   , 'string' , 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
+end
+
+% * if trimToRect 
+if currVal == 1
+    drawTrimToRect( handles );
+else
+    currTestImg = getappdata(handles.segmentation, 'currTestImg' );
+    imshow( currTestImg );
 end
 
 % --- Executes during object creation, after setting all properties.

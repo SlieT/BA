@@ -61,8 +61,6 @@ hMain = getappdata(0, 'hMainGui');
 currTraImg  = getappdata( hMain, 'currTraImg' );
 currSagImg  = getappdata( hMain, 'currSagImg' );
 currCorImg  = getappdata( hMain, 'currCorImg' );
-currImin    = getappdata( hMain, 'currImin' );
-currImax    = getappdata( hMain, 'currImax' );
 
 setappdata(handles.enhanceContrast, 'currView'              , 'tra');
 setappdata(handles.enhanceContrast, 'currImg'               , currTraImg);
@@ -74,7 +72,7 @@ setappdata(handles.enhanceContrast, 'currMethod'            , 'imadjust' );
 setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
 
-imshow( currTraImg, [ currImin, currImax ]);
+imshow( currTraImg );
 
 % set global data
 setDataMainGui( 'henhanceContrast', handles );
@@ -244,7 +242,7 @@ if applyMethod == 0
     
     % no previous methods
     if mHIndex == 0
-        imshow( testImg, [ getDataMainGui( 'currImin' ), getDataMainGui( 'currImax' ) ]); 
+        imshow( testImg ); 
         setappdata(handles.enhanceContrast, 'currTestImg', testImg );
         return 
     end
@@ -252,8 +250,7 @@ if applyMethod == 0
     % apply previous methods
     testImg = applyMethods( testImg, mH, mHIndex );
  
-    imshow( testImg, [ 0 65535 ]);     
-    %imshow( testImg, [ min(testImg(:)) max(testImg(:)) ]); 
+    imshow( testImg );     
     setappdata(handles.enhanceContrast, 'currTestImg', testImg );
     return
 end
@@ -328,8 +325,7 @@ setappdata(handles.enhanceContrast, 'currTestImg'           , testImg);
 xZoom = xlim;
 yZoom = ylim;
     
-imshow( testImg, [ 0 65535 ]); 
-%imshow( testImg, [ min(testImg(:)) max(testImg(:)) ]); 
+imshow( testImg ); 
 
 % undo current zoom state
 xlim(xZoom);
@@ -356,27 +352,15 @@ s           = size( images );
 numImages   = s( 3 );
 mH          = getappdata( handles.enhanceContrast, 'methodHistory' );
 mHIndex     = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
-newMin         = 65535;
-newMax         = 0;
 
 % apply methodHistory to all images
 for i = numImages:-1:1
     img           = images(:,:,i);
     img           = applyMethods( img, mH, mHIndex );
     images(:,:,i) = img(:,:);
-     
-    minImg        = min(img(:));
-    maxImg        = max(img(:));
-    if minImg < newMin
-        newMin = minImg;
-    elseif maxImg > newMax
-            newMax = maxImg;
-    end
 end
 
 setDataMainGui( 'Images', images );
-setDataMainGui( 'currImin', newMin );
-setDataMainGui( 'currImax', newMax );
 setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
 
@@ -477,7 +461,8 @@ if mHIndex > 0
     setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , mHIndex );
     
 else
-    disp('No used method which could be undone.')
+    warndlg( 'No used method which could be undone.', 'Attention' );
+    return;
 end
 
 
