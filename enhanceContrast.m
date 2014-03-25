@@ -347,6 +347,7 @@ function applyToImages_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+currFigure  = gcf();
 images      = getDataMainGui( 'Images' );
 s           = size( images );
 numImages   = s( 3 );
@@ -374,6 +375,9 @@ fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
 feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
 feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
 feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
+
+% set currFigure as the current figure
+figure( currFigure );
 
 
 % --- Executes on selection change in chooseView.

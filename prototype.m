@@ -405,10 +405,13 @@ Images    = zeros( sizeI( 1 ), sizeI( 2 ), numImages, classI );
 
 % read all images if folderpath changed
 if strcmp( currentFolder, handles.lastFolder ) == false
-    for i = numImages:-1:1
+    h = waitbar(0,'Reading images...');
+    for i = 1:1:numImages
         fname         = fullfile( currentFolder, files(i).name );
-        Images(:,:,i) = dicomread( fname ); 
+        Images(:,:,i) = dicomread( fname );
+        waitbar(i / numImages);
     end
+    close( h );
 else
     return;
 end

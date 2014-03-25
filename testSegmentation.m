@@ -104,7 +104,7 @@ function values_Callback(hObject, eventdata, handles)
 
 f = getappdata( handles.testSegmentation, 'img' );
 
-% % regiongrow
+% % regiongrow - gut
 % % quick and dirty to get pixelvalue
 % x = get(hObject,'String');
 % x = x{1};
@@ -135,6 +135,52 @@ f = getappdata( handles.testSegmentation, 'img' );
 % % regiongrow
 
 
+% % roipoly to get mask - gut
+% -Double-click to add a final vertex  to the polygon and
+% close the polygon. 
+% -Right-click to close the polygon without adding a
+% vertex. 
+% -You can adjust the position of the polygon and individual
+% vertices in the polygon by clicking and dragging. 
+% -To add new vertices, position the pointer along an edge of the polygon
+% and press the "A" key.
+% 
+bw = roipoly( f );  % bw = mask
+g = f;
+g(~bw) = 0;         % Set all elements in A corresponding to false values in mask to 0
+% axes( handles.result );
+% imshow( g );
+% auswählen eines einzigen punktes geschieht durch ginput(1) 
+% % roipoly to get mask
+
+
+
+% % multithresh - ganz ok bis gut
+% amountThresholds = get(hObject,'String'); % 2 thresholds mean 3 different regions
+% amountThresholds = str2double(amountThresholds);
+% thresh = multithresh(f,amountThresholds);
+% seg_F = imquantize(f,thresh);		% apply the thresholds to obtain segmented image
+% g = label2rgb(seg_F); 
+% axes( handles.result );
+% imshow(g);
+% % multithresh
+
+
+
+% % Active contours without edges - build in function - edge ist nicht gut
+% % und chan-vese bildet auch nur foreground and background und kann von
+% % der mask aus in das bild hineinexpandieren oder in die mask hinein.
+% % kann man sich mal vormerken aber eher so lala
+% mask = roipoly;
+% maxIterations = 400; % More iterations may be needed to get accurate segmentation. 
+% g = activecontour(f, mask, maxIterations, 'Chan-Vese');
+% g = activecontour(f, mask, maxIterations, 'edge'); 
+% axes( handles.result );
+% imshow( g );
+% % chen vese externe implementation
+% % I = imread('test.jpg'); seg = chenvese(I,'whole',400,0.2,'multiphase');
+
+
 
 % % splitmerge - eine gute regel zu finden wird schwer
 % mindim = get(hObject,'String');
@@ -146,7 +192,7 @@ f = getappdata( handles.testSegmentation, 'img' );
 % % splitmerge
 
 
-% % watershed - gradients
+% % watershed - gradients - nicht so doll
 % h = fspecial('sobel'); % 'prewitt' bzw If you need to emphasize vertical edges, transpose the filter H: H'
 % fd = double(f);
 % g = sqrt( imfilter( fd, h, 'replicate' ) .^ 2 + ...
@@ -161,7 +207,7 @@ f = getappdata( handles.testSegmentation, 'img' );
 % f2(wr2) = 65535;
 % % watershed - gradients
 
-% % watershed - marker-controlled
+% % watershed - marker-controlled - auch nicht so doll
 % h = fspecial('sobel'); % 'prewitt' bzw If you need to emphasize vertical edges, transpose the filter H: H'
 % fd = double(f);
 % g = sqrt( imfilter( fd, h, 'replicate' ) .^ 2 + ...
@@ -179,7 +225,6 @@ f = getappdata( handles.testSegmentation, 'img' );
 % f2 = f;
 % f2(L2 == 0) = 65535; % 255
 % % watershed - marker-controlled
-
 
     
 
