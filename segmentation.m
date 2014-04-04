@@ -22,7 +22,7 @@ function varargout = segmentation(varargin)
 
 % Edit the above text to modify the response to help segmentation
 
-% Last Modified by GUIDE v2.5 22-Mar-2014 13:43:33
+% Last Modified by GUIDE v2.5 28-Mar-2014 15:56:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -676,6 +676,7 @@ if currVal == 1      % Trim to rectangle *
     set( handles.val2           , 'string' , strcat( num2str(rows), ',', num2str(columns) ) );
     set( handles.applyToImages  , 'string' , 'Apply new values to all images' );
     set( handles.undo           , 'string' , 'Undo' );
+    set( handles.applyToView    , 'visible', 'on' );
     set( handles.newCircle      , 'visible', 'off' ); 
     set( handles.infoText       , 'string' , 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
 elseif currVal == 2  % New interval of gray levels
@@ -691,6 +692,7 @@ elseif currVal == 2  % New interval of gray levels
     set( handles.val2           , 'string' , 'Max' );
     set( handles.applyToImages  , 'string' , 'Apply new values to all images' );
     set( handles.undo           , 'string' , 'Undo' );
+    set( handles.applyToView    , 'visible', 'on' );
     set( handles.newCircle      , 'visible', 'off' ); 
     set( handles.infoText       , 'string' , 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
 elseif currVal == 3 % Cut out inner/outer circle
@@ -708,6 +710,7 @@ elseif currVal == 3 % Cut out inner/outer circle
     set( handles.val2           , 'visible', 'off' );
     set( handles.applyToImages  , 'string' , 'Apply only to this image' );
     set( handles.newCircle      , 'visible', 'on' ); 
+    set( handles.applyToView    , 'visible', 'off' );
     set( handles.undo           , 'string' , 'Undo only this method' );
     set( handles.infoText       , 'string' , 'Create a circle by adding points to the image, then choose if you want to cut out the "inner" or the "outer" part. (-Adjust the position of the polygon and individual vertices by clicking and dragging. -To add new vertices, position the pointer along an edge and press the "a" key. -Double-click to add a final vertex and double-click again to submit the polygon. -Right-click to close the polygon without adding a vertex. -Delete by pressing Backspace or Escape.)' );
 end
@@ -786,3 +789,4 @@ if roi == -1
 else
     warndlg( 'You can only create one circle at a time, delete the current one, then create a new circle.', 'Attention' );
 end;
+

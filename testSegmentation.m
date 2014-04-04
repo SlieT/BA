@@ -104,8 +104,8 @@ function values_Callback(hObject, eventdata, handles)
 
 f = getappdata( handles.testSegmentation, 'img' );
 
-% % regiongrow - gut
-% % quick and dirty to get pixelvalue
+% regiongrow - gut
+% quick and dirty to get pixelvalue
 % x = get(hObject,'String');
 % x = x{1};
 % xy = strsplit( x, '.' );
@@ -124,15 +124,36 @@ f = getappdata( handles.testSegmentation, 'img' );
 % 
 % S = round(str2double( ST{1} ));
 % T = round(str2double( ST{2} ));
-% 
-% [ resultWithLabels, NumberRegions, finalSeedImage, thresholdImage ] = ...
-%     regiongrow( f, S, T );
-% 
+
+% % input with getpts
+S = false(size(f));
+[X, Y] = getpts(handles.ogImg); % einfaches rounden
+for i=1:1:size(X)
+    X(i) = round(X(i));
+    Y(i) = round(Y(i));
+    S(Y(i), X(i)) = 1;
+end
+
+T = get(hObject,'String');
+T = str2double(T);
+% % input with getpts
+
+% global resultWithLabels; % type the same again in the commandline to see
+% the variable in the workspace
+[ resultWithLabels, NumberRegions, finalSeedImage, thresholdImage ] = ...
+    regiongrow( f, S, T );
+
+% figure, imshow(thresholdImage)
+% figure, imshow(finalSeedImage)
+% figure, imshow(resultWithLabels)
+
 % disp( NumberRegions );
-% setappdata( handles.testSegmentation, 'r', resultWithLabels );
-% setappdata( handles.testSegmentation, 'f', finalSeedImage );
-% setappdata( handles.testSegmentation, 't', thresholdImage );
-% % regiongrow
+setappdata( handles.testSegmentation, 'r', resultWithLabels );
+setappdata( handles.testSegmentation, 'f', finalSeedImage );
+setappdata( handles.testSegmentation, 't', thresholdImage );
+% [ resultWithLabels, NumberRegions, finalSeedImage, thresholdImage ] = ...
+%     regiongrow( image, arryOrValueSeedpoint, arrayOrValueThresh );
+% regiongrow
 
 
 % % roipoly to get mask - gut
@@ -145,9 +166,9 @@ f = getappdata( handles.testSegmentation, 'img' );
 % -To add new vertices, position the pointer along an edge of the polygon
 % and press the "A" key.
 % 
-bw = roipoly( f );  % bw = mask
-g = f;
-g(~bw) = 0;         % Set all elements in A corresponding to false values in mask to 0
+% bw = roipoly( f );  % bw = mask
+% g = f;
+% g(~bw) = 0;         % Set all elements in A corresponding to false values in mask to 0
 % axes( handles.result );
 % imshow( g );
 % auswählen eines einzigen punktes geschieht durch ginput(1) 
@@ -243,18 +264,33 @@ function input_Callback(hObject, eventdata, handles)
 axes(handles.result)
 input = get(hObject, 'String');
 
-% % regiongrow
-% if strcmp(input, 'g');
-%     g = getappdata( handles.testSegmentation, 'r' );
-%     imshow(g)
-% elseif strcmp(input, 'SI');
-%     SI = getappdata( handles.testSegmentation, 'f' );
-%     imshow(SI);
-% elseif strcmp(input, 'TI')
-%     TI = getappdata( handles.testSegmentation, 't' );
-%     imshow(TI);
-% end
-% % regiongrow
+% regiongrow
+if strcmp(input, 'g');
+    g = getappdata( handles.testSegmentation, 'r' );
+    %imshow(g)
+    
+    % show the result within the original image
+    g = im2bw(g); % too reduce all values to 1 and 0
+    axes(handles.ogImg);
+    f = getappdata( handles.testSegmentation, 'img' );
+    imshow(f);
+    hold on;
+    alpha = 0.3;
+    alpha_matrix = alpha*ones(size(g,1),size(g,2));
+    green = cat(3, zeros(size(g)), g, zeros(size(g)));
+    h = imshow(green);
+    set(h,'AlphaData',alpha_matrix);
+    hold off;
+    % show the result within the original image
+    
+elseif strcmp(input, 'SI');
+    SI = getappdata( handles.testSegmentation, 'f' );
+    imshow(SI);
+elseif strcmp(input, 'TI')
+    TI = getappdata( handles.testSegmentation, 't' );
+    imshow(TI);
+end
+% regiongrow
 
 
 
@@ -286,30 +322,52 @@ end
 
 
 
-function [g NR SI TI] = regiongrow(f, S, T)
- 
-f = double(f);
- 
-if numel(S) == 1
-    SI = f == S;
-    S1 = S;
-else
-    % Eliminate connectd seed locations
-    SI = bwmorph(S, 'shrink', Inf);
-    %J  = find(SI);
-    %S1 = f(J);
-    S1 = f(SI);
-end
- 
-TI = false(size(f));
-for K = 1:length(S1)
-    seedval = S1(K);
-    S = abs(f - seedval) <= T;
-    TI = TI | S;
-end
- 
-[g, NR] = bwlabel(imreconstruct(SI,TI));
 
+function [g, NR, SI, TI] = regiongrow(f, S, T)
+%REGIONGROW Perform segmentation by region growing.
+%   [G, NR, SI, TI] = REGIONGROW(F, SR, T).  S can be an array (the
+%   same size as F) with a 1 at the coordinates of every seed point
+%   and 0s elsewhere.  S can also be a single seed value. Similarly,
+%   T can be an array (the same size as F) containing a threshold
+%   value for each pixel in F. T can also be a scalar, in which
+%   case it becomes a global threshold.   
+%
+%   On the output, G is the result of region growing, with each
+%   region labeled by a different integer, NR is the number of
+%   regions, SI is the final seed image used by the algorithm, and TI
+%   is the image consisting of the pixels in F that satisfied the
+%   threshold test. 
+
+%   Copyright 2002-2004 R. C. Gonzalez, R. E. Woods, & S. L. Eddins
+%   Digital Image Processing Using MATLAB, Prentice-Hall, 2004
+%   $Revision: 1.4 $  $Date: 2003/10/26 22:35:37 $
+
+f = double(f);
+% If S is a scalar, obtain the seed image.
+if numel(S) == 1
+   SI = f == S;
+   S1 = S;
+else
+   % S is an array. Eliminate duplicate, connected seed locations 
+   % to reduce the number of loop executions in the following 
+   % sections of code.
+   SI = bwmorph(S, 'shrink', Inf);  
+   %J = find(SI);
+   %S1 = f(J); % Array of seed values.
+   S1 = f(SI);
+end
+
+TI = false(size(f));	
+for K = 1:length(S1)
+   seedvalue = S1(K);
+   S = abs(f - seedvalue) <= T;	
+   TI = TI | S;
+end
+
+% Use function imreconstruct with SI as the marker image to
+% obtain the regions corresponding to each seed in S. Function
+% bwlabel assigns a different integer to each connected region.	
+[g, NR] = bwlabel(imreconstruct(SI, TI));
 
 
 function flag = predicate(region)	

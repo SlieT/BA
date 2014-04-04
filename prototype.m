@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 09-Mar-2014 17:09:30
+% Last Modified by GUIDE v2.5 01-Apr-2014 18:53:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,6 +97,10 @@ if isempty(findobj('type','figure','name','enhanceContrast')) == 0
 elseif isempty(findobj('type','figure','name','segmentation')) == 0
     hseg = getDataMainGui( 'hsegmentation' );
     delete(hseg.output);
+    
+elseif isempty(findobj('type','figure','name','regionGrow')) == 0
+    hreg = getDataMainGui( 'hregionGrow' );
+    delete(hreg.output);
 end
 
 % Hint: delete(hObject) closes the figure
@@ -166,7 +170,9 @@ if newVal ~= -1
     set( handles.currImage, 'String', files( newVal ).name );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
+            || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+                || isempty(findobj('type','figure','name','regionGrow')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'tra', image );
     end
@@ -227,7 +233,9 @@ if newVal ~= -1
     setDataMainGui( 'currSagImg', image );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
+            || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+                || isempty(findobj('type','figure','name','regionGrow')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'sag', image );
     end
@@ -286,7 +294,9 @@ if newVal ~= -1
     setDataMainGui( 'currCorImg', image );
     
     % update testView in current figure if figure is live
-    if isempty(findobj('type','figure','name','segmentation')) == 0 || isempty(findobj('type','figure','name','enhanceContrast')) == 0   % == 0 means "no its not empty"
+    if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
+            || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+                || isempty(findobj('type','figure','name','regionGrow')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'cor', image );
     end
@@ -514,11 +524,8 @@ setDataMainGui( 'fhUpdateCorImg', @updateCorImg  );
 setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
 setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'handles'       , handles  );
-
-% defined in diffrent files
-% --- defined in segmentation.m
-% setDataMainGui( 'hAdjustGrayScale', handles );
-% setDataMainGui( 'fhUpdateTestView', @updateTestView );
+setDataMainGui( 'masks'         , struct  );
+setDataMainGui( 'regionGrowDropDownMasks', {}  );
 
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
@@ -638,7 +645,8 @@ updateCorLines( handles );
 % --- Executes on button press in segment.
 function segment_Callback(hObject, eventdata, handles)
 
-if isempty(findobj('type','figure','name','enhanceContrast')) == 0 % == 0 means "no its not empty"
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 % == 0 means "no its not empty"
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -649,12 +657,24 @@ segmentation;
 % --- Executes on button press in enhanceContrast.
 function enhanceContrast_Callback(hObject, eventdata, handles)
 
-if isempty(findobj('type','figure','name','segmentation')) == 0 % == 0 means "no its not empty"
+if isempty(findobj('type','figure','name','segmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','regionGrow')) == 0
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
 
 enhanceContrast;
+
+
+% --- Executes on button press in regionGrow.
+function regionGrow_Callback(hObject, eventdata, handles)
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+        || isempty(findobj('type','figure','name','segmentation')) == 0 
+    warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
+    return;
+end
+
+regionGrow;
 
 
 % --- Executes during object creation, after setting all properties.
@@ -734,3 +754,175 @@ set( handles.currImage, 'String', files(sldTra).name );
 updateTraImg( sldTra, handles );
 updateSagImg( sldSag, handles );
 updateCorImg( sldCor, handles );
+
+
+% --------------------------------------------------------------------
+function menuMask_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMask (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function menuMaskCreate_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMaskCreate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% if no images loaded
+images  = getDataMainGui( 'Images' );
+s       = size(images);
+if s(1) == 0
+    warndlg('Before you can create a mask you need to import images.', 'Warning');
+    return;
+end
+
+% make sure
+w       = warndlg('Before you create a mask, DELETE all unnesecarry images FIRST because the mask is fixed at its size.', 'Warning');
+waitfor(w);
+name    = inputdlg('Name of new Mask:', 'Create Mask');
+name    = name{1};
+
+% if name already exists
+masks         = getDataMainGui( 'masks' );
+masksNames    = fieldnames(masks);
+sizeNames     = size(masksNames, 1);
+
+for i = 1:1:sizeNames
+    if strcmp( masksNames{i}, name )
+        warndlg( 'Mask with this name already exists.', 'Attention' );
+        return;
+    end
+end
+
+regionGrowDropDownMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+sizeI   = size( images );
+masks   = getDataMainGui( 'masks' );
+newMask = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
+
+% add to struct
+masks.( name ) = newMask;
+regionGrowDropDownMasks{ size(regionGrowDropDownMasks,2) + 1 } = name;
+
+setDataMainGui( 'masks', masks );
+setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
+
+% append the name into the regiongrow drowdown if regiongrow fig is alive 
+if isempty(findobj('type','figure','name','regionGrow')) == 0
+    hregionGrow = getDataMainGui( 'hregionGrow' ); 
+    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks ); 
+end
+
+
+% --------------------------------------------------------------------
+function menuMaskLoad_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMaskLoad (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+currentFolder = uigetdir( pwd );                            % get the current Folder
+
+if currentFolder == 0                                       % dialogCancel?
+    return;
+end
+
+files         = dir( fullfile( currentFolder, '*.png' ));       % build struct of all png-Images/Masks in this folder   
+
+% dialog to name mask
+maskName      = inputdlg('Type in the name of the mask:', 'Load mask');
+
+if isempty(maskName)
+    return;
+end
+
+% if name already exists
+masks         = getDataMainGui( 'masks' );
+masksNames    = fieldnames(masks);
+sizeNames     = size(masksNames, 1);
+maskName      = maskName{1};
+
+for i = 1:1:sizeNames
+    if strcmp( masksNames{i}, maskName )
+        warndlg( 'Mask with this name already exists.', 'Attention' );
+        return;
+    end
+end
+
+% load images
+numMask       = size(files, 1);
+M             = imread( fullfile( currentFolder, files(1).name ));   % read in first mask
+sizeM         = size( M );
+newMask       = false( sizeM( 1 ), sizeM( 2 ), numMask );
+
+h = waitbar(0,'Loading images into mask...');
+for i = 1:1:numMask
+    fname          = fullfile( currentFolder, files(i).name );
+    newMask(:,:,i) = imread( fname );
+    waitbar(i / numMask);
+end
+close( h );
+
+% add to struct
+masks.( maskName )          = newMask;
+regionGrowDropDownMasks     = getDataMainGui( 'regionGrowDropDownMasks' );
+regionGrowDropDownMasks{ size(regionGrowDropDownMasks,2) + 1 } = maskName;
+
+setDataMainGui( 'masks', masks );
+setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
+
+% append the name into the regiongrow drowdown if regiongrow fig is alive 
+if isempty(findobj('type','figure','name','regionGrow')) == 0
+    hregionGrow = getDataMainGui( 'hregionGrow' ); 
+    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks ); 
+end
+
+
+% --------------------------------------------------------------------
+function menuMaskSave_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMaskSave (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+masks       = getDataMainGui( 'masks' );
+masksNames  = fieldnames(masks);
+
+% no images loaded yet
+if size( masks ) == 0
+    warndlg( 'No masks available.', 'Attention' );
+    return;
+end
+
+[s,v]       = listdlg('PromptString','Select a file:',...
+                'SelectionMode','single',...
+                'ListString',masksNames);
+
+% cancel?
+if v == 0
+    return;
+end
+
+maskName    = masksNames{s};
+currMask    = masks.( maskName );
+sizeMask    = size(currMask, 3);
+
+dirName = uigetdir();
+
+% dialogCancel
+if dirName == 0      
+  return;
+end
+
+% save images with leading zeros in the filename depending on the amount of
+% images e.g. 120 images => 001.png, 017.png, 108.png
+numOfDezimal        = floor( log10(sizeMask) ) + 1;
+numOfDezimalFormat  = strcat( '%0', num2str(numOfDezimal), 'd' );
+
+% save to disk
+for i = 1:1:sizeMask
+        addOn = strcat( maskName, '_', num2str(i, numOfDezimalFormat), '.png' );
+        fname = fullfile( dirName, addOn );
+        imwrite( currMask(:,:,i), fname, 'png' );   
+end
+
+msgbox( 'Images successfully stored.','Save success');
+
