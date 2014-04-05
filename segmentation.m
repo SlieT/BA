@@ -131,6 +131,18 @@ hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
 
 
+% --- keep the current zoom state
+function imshowKeepZoom( img )
+xZoom = xlim;
+yZoom = ylim;
+    
+imshow( img ); 
+
+% set current zoom state
+xlim(xZoom);
+ylim(yZoom);
+
+
 function val1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of val1 as text
 %        str2double(get(hObject,'String')) returns contents of val1 as a double
@@ -259,15 +271,8 @@ function check = checkTrimToRect( handles )
 % --- draw the rectangle into the image    
 function drawTrimToRect( handles )
     currTestImg = getappdata(handles.segmentation, 'currTestImg' );
-    % save current zoom state
-    xZoom = xlim;
-    yZoom = ylim;
-    
-    imshow( currTestImg );
 
-    % undo current zoom state
-    xlim(xZoom);
-    ylim(yZoom);
+    imshowKeepZoom( currTestImg );
     
     Isize     = getDataMainGui( 'Isize' );
     numImages = Isize(3); 
@@ -336,7 +341,7 @@ if applyMethod == 0
     
     % no previous methods
     if mHIndex == 0
-        imshow( testImg ); 
+        imshowKeepZoom( testImg ); 
         setappdata(handles.segmentation, 'currTestImg'   , testImg );
         setappdata(handles.segmentation, 'currTestImgRoi', testImg );
         return 
@@ -345,7 +350,7 @@ if applyMethod == 0
     % apply previous methods
     testImg = applyMethods( testImg, mH, mHIndex, handles );
  
-    imshow( testImg );     
+    imshowKeepZoom( testImg );     
     setappdata(handles.segmentation, 'currTestImg'   , testImg );
     setappdata(handles.segmentation, 'currTestImgRoi', testImg );
     return
@@ -400,15 +405,7 @@ setappdata(handles.segmentation, 'methodHistoryAllImages'         , mH );
 setappdata(handles.segmentation, 'methodHistoryIndexAllImages'    , mHIndex );
 setappdata(handles.segmentation, 'currTestImg'           , testImg);
 
-% save current zoom state
-xZoom = xlim;
-yZoom = ylim;
-    
-imshow( testImg ); 
-
-% undo current zoom state
-xlim(xZoom);
-ylim(yZoom);
+imshowKeepZoom( testImg );
     
 
 % --- Executes on button press in applyToView.
@@ -609,7 +606,7 @@ if currMethod == 3
                 innerOuter = mH{i}(2);
                 roi        = mH{i}(3);
                 roi = roi{1};
-                disp(innerOuter); disp(class(roi)); disp(mName)
+
                 if strcmp( innerOuter, 'outer' )
                     currTestImg(~roi) = 0;
                 
@@ -621,7 +618,7 @@ if currMethod == 3
         setappdata(handles.segmentation, 'currTestImgRoi'               , currTestImg);
         setappdata(handles.segmentation, 'methodHistoryThisImage'       , mH );
         setappdata(handles.segmentation, 'methodHistoryIndexThisImage'  , mHIndex );
-        imshow( currTestImg ); 
+        imshowKeepZoom( currTestImg ); 
         return;
     else
         warndlg( 'No used method which could be undone.', 'Attention' );
@@ -720,7 +717,7 @@ if currVal == 1
     drawTrimToRect( handles );
 else
     currTestImg = getappdata(handles.segmentation, 'currTestImg' );
-    imshow( currTestImg );
+    imshowKeepZoom( currTestImg );
 end
 
 % --- Executes during object creation, after setting all properties.
@@ -780,7 +777,7 @@ if roi == -1
             return;
             
         end
-        imshow(currTestImgRoi);
+        imshowKeepZoom( currTestImgRoi );
         setappdata(handles.segmentation, 'methodHistoryThisImage'         , mH );
         setappdata(handles.segmentation, 'methodHistoryIndexThisImage'    , mHIndex );
         setappdata(handles.segmentation, 'currTestImgRoi' , currTestImgRoi );

@@ -133,14 +133,20 @@ handleTraImg = imshow( getDataMainGui( 'currTraImg' ) );
 
 
 if getDataMainGui( 'showLines' )
+    lineWidth       = getDataMainGui( 'lineWidth' );
+    startPointXSag  = get( handles.sliderSag, 'Value' );
+    endPointYSag    = size( getDataMainGui( 'currTraImg' ), 1 );
+    endpointXCor    = size( getDataMainGui( 'currTraImg' ), 1 );
+    startpointYCor  = get( handles.sliderCor, 'Max' )+1 - get( handles.sliderCor, 'Value' );
+    
     % draw the sagittal and coronal line
     hold on;
+    
     % draw sag line
-    % smaller steps(:0.5:) otherwise the line appears 'dotted'
-    plot( get( handles.sliderSag, 'Value' ), 1:0.5:getDataMainGui( 'traColumns' ), 'g-','linewidth', getDataMainGui( 'lineWidth' ) );
-
+    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off');
+    
     % draw cor line
-    plot( 1:0.5:getDataMainGui( 'traRows' ), get( handles.sliderCor, 'Max' )+1 - get( handles.sliderCor, 'Value' ), 'b-','linewidth', getDataMainGui( 'lineWidth' ) );
+    line([0, endpointXCor], [startpointYCor, startpointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off');
     hold off;
     % END draw 
     
@@ -200,14 +206,19 @@ axes( handles.sagittal );
 handleSagImg = imshow( getDataMainGui( 'currSagImg' ) );
 
 if getDataMainGui( 'showLines' )
+    lineWidth       = getDataMainGui( 'lineWidth' );
+    endPointXTra    = size( getDataMainGui( 'currSagImg' ), 2 );
+    startPointYTra  = getDataMainGui( 'sagRows' )+1 - getDataMainGui( 'ratioTransSag' ) * get( handles.sliderTra, 'Value' );
+    startPointXCor  = get( handles.sliderCor, 'Max' )+1 - get( handles.sliderCor, 'Value' ); 
+    endPointYCor    = size( getDataMainGui( 'currSagImg' ), 1 );
+    
     % draw the transversal and coronal line
     hold on;
     % draw tra line
-    % because of flip plot(columns, rows)
-    plot( 1:0.5:getDataMainGui( 'sagColumns' ), getDataMainGui( 'sagRows' )+1 - getDataMainGui( 'ratioTransSag' ) * get( handles.sliderTra, 'Value' ), 'r-','linewidth', getDataMainGui( 'lineWidth' ) ); 
-
+    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off');
+    
     % draw cor line
-    plot( (get( handles.sliderCor, 'Max' )+1 - get( handles.sliderCor, 'Value' )) * getDataMainGui( 'ratioCorSag' ), 1:0.5:getDataMainGui( 'sagRows' ), 'b-','linewidth', getDataMainGui( 'lineWidth' ) );
+    line([startPointXCor, startPointXCor], [0, endPointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off');
     hold off;
     % END draw
     
@@ -262,14 +273,19 @@ axes( handles.coronal );
 handleCorImg = imshow( getDataMainGui( 'currCorImg' ) );
 
 if getDataMainGui( 'showLines' )
+    lineWidth       = getDataMainGui( 'lineWidth' );
+    endPointXTra    = size( getDataMainGui( 'currSagImg' ), 2 );
+    startPointYTra  = getDataMainGui( 'sagRows' )+1 - getDataMainGui( 'ratioTransSag' ) * get( handles.sliderTra, 'Value' );
+    startPointXSag  = get( handles.sliderSag, 'Value' );
+    endPointYSag    = size( getDataMainGui( 'currCorImg' ), 1 );
+    
     % draw the transversal and sagittal line
     hold on;
     % draw tra line
-    % because of flip plot(columns, rows)
-    plot( 1:0.5:getDataMainGui( 'corColumns' ), getDataMainGui( 'corRows' )+1 - getDataMainGui( 'ratioTransCor' ) * get( handles.sliderTra, 'Value' ), 'r-','linewidth', getDataMainGui( 'lineWidth' ) ); 
-
+    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off');
+    
     % draw sag line
-    plot( get( handles.sliderSag, 'Value' ) * getDataMainGui( 'ratioSagCor' ), 1:0.5:getDataMainGui( 'corRows' ), 'g-','linewidth', getDataMainGui( 'lineWidth' ) );
+    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off');
     hold off;
     % END draw
     
@@ -797,7 +813,6 @@ end
 
 regionGrowDropDownMasks = getDataMainGui( 'regionGrowDropDownMasks' );
 sizeI   = size( images );
-masks   = getDataMainGui( 'masks' );
 newMask = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
 
 % add to struct
@@ -811,6 +826,11 @@ setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
 if isempty(findobj('type','figure','name','regionGrow')) == 0
     hregionGrow = getDataMainGui( 'hregionGrow' ); 
     set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks ); 
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hregionGrow.regionGrow, 'currMask', newMask );
+    end
 end
 
 
@@ -873,7 +893,12 @@ setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
 % append the name into the regiongrow drowdown if regiongrow fig is alive 
 if isempty(findobj('type','figure','name','regionGrow')) == 0
     hregionGrow = getDataMainGui( 'hregionGrow' ); 
-    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks ); 
+    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks );
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hregionGrow.regionGrow, 'currMask', newMask );
+    end
 end
 
 

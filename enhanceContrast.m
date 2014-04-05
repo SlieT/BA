@@ -121,6 +121,18 @@ hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
 
 
+% --- keep the current zoom state
+function imshowKeepZoom( img )
+xZoom = xlim;
+yZoom = ylim;
+    
+imshow( img ); 
+
+% set current zoom state
+xlim(xZoom);
+ylim(yZoom);
+
+
 function val1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of val1 as text
 %        str2double(get(hObject,'String')) returns contents of val1 as a double
@@ -242,7 +254,7 @@ if applyMethod == 0
     
     % no previous methods
     if mHIndex == 0
-        imshow( testImg ); 
+        imshowKeepZoom( testImg ); 
         setappdata(handles.enhanceContrast, 'currTestImg', testImg );
         return 
     end
@@ -250,7 +262,7 @@ if applyMethod == 0
     % apply previous methods
     testImg = applyMethods( testImg, mH, mHIndex );
  
-    imshow( testImg );     
+    imshowKeepZoom( testImg );     
     setappdata(handles.enhanceContrast, 'currTestImg', testImg );
     return
 end
@@ -321,16 +333,7 @@ setappdata(handles.enhanceContrast, 'methodHistory'         , mH );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , mHIndex );
 setappdata(handles.enhanceContrast, 'currTestImg'           , testImg);
 
-% save current zoom state
-xZoom = xlim;
-yZoom = ylim;
-    
-imshow( testImg ); 
-
-% undo current zoom state
-xlim(xZoom);
-ylim(yZoom);
-    
+imshowKeepZoom( testImg );    
 
 % --- Executes on button press in applyToView.
 function applyToView_Callback(hObject, eventdata, handles)

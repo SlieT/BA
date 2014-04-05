@@ -70,10 +70,11 @@ setappdata(handles.regionGrow, 'currTraImg'            , currTraImg );
 setappdata(handles.regionGrow, 'currSagImg'            , currSagImg );
 setappdata(handles.regionGrow, 'currCorImg'            , currCorImg );
 setappdata(handles.regionGrow, 'currSeedMask'          , seedMask );
-setappdata(handles.regionGrow, 'currImgMask'           , regionMask );
+setappdata(handles.regionGrow, 'currImgMask'           , 0 );
 setappdata(handles.regionGrow, 'currImgMaskMethod'     , regionMask );
 setappdata(handles.regionGrow, 'currSeedMethod'        , 'New Seeds' );
 setappdata(handles.regionGrow, 'currMask'              , 0 );
+setappdata(handles.regionGrow, 'getpts'                , 0 ); % 0 = no in use
 % if masks exist set mask
 dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
 sizeM = size(dDMasks);
@@ -81,7 +82,7 @@ if sizeM(1) > 0
     name        = dDMasks{1};
     masks       = getDataMainGui( 'masks' );
     currMask    = masks.( name );
-    setappdata(handles.regionGrow, 'currMask'              , currMask );
+    setappdata(handles.regionGrow, 'currMask'          , currMask );
 end
 
 imshow( currTraImg );
@@ -134,6 +135,18 @@ hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
     
 
+% --- keep the current zoom state
+function h = imshowKeepZoom( img )
+xZoom = xlim;
+yZoom = ylim;
+    
+h     = imshow( img ); 
+
+% set current zoom state
+xlim(xZoom);
+ylim(yZoom);
+
+
 % --- choose your seeds
 function [X, Y] = chooseSeeds( handles )
 
@@ -176,7 +189,7 @@ setappdata(handles.regionGrow, 'currSeedMask', seedMask );
 function drawSeeds( handles, seedMask )
 
 red             = cat( 3, seedMask, zeros(size(seedMask)), zeros(size(seedMask)) );
-imshow(red);
+imshowKeepZoom(red);
 
 % the "data cursor" gets the pixelvalue of the top image so we overlay the
 % current image (importent to find a good thresh)
@@ -184,7 +197,7 @@ hold on;
 alpha           = 0.2;
 alpha_matrix    = alpha * ones(size( seedMask,1 ), size( seedMask, 2 ));
 img             = getappdata( handles.regionGrow, 'currImg' );
-h               = imshow(img);
+h               = imshowKeepZoom(img);
 set( h,'AlphaData',alpha_matrix );
     
 hold off;
@@ -245,7 +258,7 @@ function applyToView( handles, applyMethod )
 if applyMethod == 0
     % get current image
     currImg = getappdata(handles.regionGrow, 'currImg' );
-    imshow( currImg );     
+    imshowKeepZoom( currImg );     
     return;
 end
 
@@ -268,28 +281,14 @@ setappdata(handles.regionGrow, 'currImgMask', g );
 setappdata(handles.regionGrow, 'currImgMaskMethod', g );
 
 green = cat(3, zeros(size(g)), g, zeros(size(g)));
-imshow( green );
+imshowKeepZoom( green );
 
 hold on;
 alpha = 0.7;
 alpha_matrix = alpha*ones(size(g,1),size(g,2));
-h = imshow( img );
+h = imshowKeepZoom( img );
 set(h,'AlphaData',alpha_matrix);
 hold off;
-
-% XXX keep zoom
-return;
-
-
-% save current zoom state
-xZoom = xlim;
-yZoom = ylim;
-    
-imshow( img ); 
-
-% undo current zoom state
-xlim(xZoom);
-ylim(yZoom);
 
 
 % --- Executes on button press in applyToView.
@@ -306,19 +305,24 @@ function chooseView_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns chooseView contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from chooseView
 
-currVal     = get(hObject,'Value'); 
+currVal     = get(hObject,'Value');
 
+% set currentImgMask
 if currVal == 1      % transversal
-    currImg       = getDataMainGui( 'currTraImg' );
+    currImg         = getDataMainGui( 'currTraImg' );
     setappdata(handles.regionGrow, 'currView', 'tra');
+    
 elseif currVal == 2  % sagittal
-    currImg       = getDataMainGui( 'currSagImg' );
+    currImg         = getDataMainGui( 'currSagImg' );
     setappdata(handles.regionGrow, 'currView', 'sag');
+    
 else                 % coronal
-    currImg       = getDataMainGui( 'currCorImg' );
+    currImg             = getDataMainGui( 'currCorImg' );
     setappdata(handles.regionGrow, 'currView', 'cor');
+    
 end
 
+setappdata(handles.regionGrow, 'currImgMask', 0 );
 setappdata(handles.regionGrow, 'currImg', currImg);
 applyToView( handles, 0 );
 
@@ -374,13 +378,20 @@ function chooseSeedMethod_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns chooseSeedMethod contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from chooseSeedMethod
 
+isInUse = getappdata(handles.regionGrow, 'getpts');
+if isInUse == 1
+    warndlg( 'You can only use one method at a time, end(see tooltip) the current one, then choose a new method.', 'Attention' );
+    return;
+end
+setappdata(handles.regionGrow, 'getpts', 1);
+
 currMethod = get(hObject,'Value');
 
 if currMethod == 1      % New Seeds
     % redraw image and reset seedMask
     img         = getappdata( handles.regionGrow, 'currImg' );
 	seedMask    = false(size( img ));
-    imshow( img );
+    imshowKeepZoom( img );
     setappdata( handles.regionGrow, 'currSeedMask', seedMask );
     
     [X, Y] = chooseSeeds( handles );
@@ -390,7 +401,7 @@ if currMethod == 1      % New Seeds
 elseif currMethod == 2  % Add to current seeds
     img  = getappdata( handles.regionGrow, 'currImg' );
     seedMask = getappdata( handles.regionGrow, 'currSeedMask' );
-    imshow( img );
+    imshowKeepZoom( img );
     drawSeeds( handles, seedMask );
     
     [X, Y] = chooseSeeds( handles );
@@ -401,7 +412,7 @@ elseif currMethod == 2  % Add to current seeds
 elseif currMethod == 3  % Delete from current seeds
     img  = getappdata( handles.regionGrow, 'currImg' );
     seedMask = getappdata( handles.regionGrow, 'currSeedMask' );
-    imshow( img );
+    imshowKeepZoom( img );
     drawSeeds( handles, seedMask );
     
     [X, Y] = chooseSeeds( handles );
@@ -409,6 +420,8 @@ elseif currMethod == 3  % Delete from current seeds
     drawSeeds( handles, seedMask );
     
 end
+
+setappdata(handles.regionGrow, 'getpts', 0);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -505,22 +518,62 @@ function chooseMaskMethod_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns chooseMaskMethod contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from chooseMaskMethod
 
+dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+sizeM = size(dDMasks);
+if sizeM(1) == 0
+    warndlg( 'Couldn''t found a mask to use this method on. Create/Load mask first.', 'Attention' );
+    return;
+end
+
 currMethod      = get(hObject,'Value');
 img             = getappdata(handles.regionGrow, 'currImg' );
 currMask        = getappdata(handles.regionGrow, 'currMask' );
 currImgMask     = getappdata(handles.regionGrow, 'currImgMask' );
+% if regiongrow hasn't been used yet create empty mask
+if currImgMask == 0
+    currImgMask = zeros(size(img));
+end
 hMain           = getDataMainGui( 'handles' );
-currIndex       = get( hMain.sliderTra, 'Value' );
-currDefaultMask = currMask(:,:,currIndex);
 
+% get mask according to current View
+currVal         = get(handles.chooseView,'Value'); 
+if currVal == 1      % transversal
+    currIndex           = get( hMain.sliderTra, 'Value' );
+	currDefaultMask     = currMask(:,:,currIndex);
+    
+elseif currVal == 2  % sagittal
+    currIndex           = get( hMain.sliderSag, 'Value' );
+    currDefaultMask     = currMask(:,currIndex,:);
+    % reshape
+    currDefaultMaskSize = size(currDefaultMask);
+    currDefaultMask     = reshape( currDefaultMask, [ currDefaultMaskSize(1), currDefaultMaskSize(3) ]);
+    manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
+    nearestNeighbour    = makeresampler( 'cubic','fill' );
+    currDefaultMask     = imtransform( currDefaultMask,manipulate,nearestNeighbour );
+    currDefaultMask     = flipdim(currDefaultMask,2);
+    
+else                 % coronal
+    currIndex           = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+    currDefaultMask     = currMask(currIndex,:,:);
+    % reshape
+    currDefaultMaskSize = size(currDefaultMask);
+    currDefaultMask     = reshape( currDefaultMask, [ currDefaultMaskSize(2), currDefaultMaskSize(3) ]);
+    manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );     
+    nearestNeighbour    = makeresampler( 'cubic','fill' );
+    currDefaultMask     = imtransform( currDefaultMask,manipulate,nearestNeighbour );
+    currDefaultMask     = flipdim(currDefaultMask,2);
+    
+end
+
+% what method?
 if currMethod == 1      % New/Renew Mask
-    greenblue = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshow( greenblue );
+    greenblue           = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
+    imshowKeepZoom( greenblue );
 
 elseif currMethod == 2  % Add to current Mask
     currImgMask( currDefaultMask==1 ) = 0;
     greenblue = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshow( greenblue );
+    imshowKeepZoom( greenblue );
     currDefaultMask( currImgMask==1 ) = 1;
     currImgMask = currDefaultMask;
     
@@ -529,7 +582,7 @@ elseif currMethod == 3  % Delete from current Mask
     currImgMask( currDefaultMask==1 - currImgMask==1 == 0 ) = 1;
     currImgMask( currDefaultMask==1 - currImgMask==1 > 0 ) = 0;
     greenblue = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshow( greenblue );
+    imshowKeepZoom( greenblue );
     % delete the overlapping
     currDefaultMask( currImgMask==1 ) = 0;
     currImgMask = currDefaultMask;
@@ -539,10 +592,9 @@ setappdata(handles.regionGrow, 'currImgMaskMethod', currImgMask );
 hold on;
 alpha = 0.6;
 alpha_matrix = alpha*ones(size(img,1),size(img,2));
-h = imshow( img );
+h = imshowKeepZoom( img );
 set(h,'AlphaData',alpha_matrix);
 hold off;
-
 
 
 
@@ -568,19 +620,46 @@ function applyToMask_Callback(hObject, eventdata, handles)
 dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
 sizeM = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t found a mask to save. Create mask first.', 'Attention' );
+    warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
     return;
 end
 
 currMaskMethod  = getappdata(handles.regionGrow, 'currImgMaskMethod' );
 currMask        = getappdata(handles.regionGrow, 'currMask' );
 hMain           = getDataMainGui( 'handles' );
-currIndex       = get( hMain.sliderTra, 'Value' );
 img             = getappdata(handles.regionGrow, 'currImg' );
 
-currMask(:,:,currIndex) = currMaskMethod;
+% save mask according to current View
+currVal         = get(handles.chooseView,'Value'); 
+if currVal == 1      % transversal
+    currIndex               = get( hMain.sliderTra, 'Value' );
+	currMask(:,:,currIndex) = currMaskMethod;
+    
+elseif currVal == 2  % sagittal
+    currIndex      = get( hMain.sliderSag, 'Value' );
+    sizeI          = size(currMaskMethod, 2); % 256
+    sizeJ          = size(currMaskMethod, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            currMask(i,currIndex,j) = currMaskMethod(sizeJ+1 - j, sizeI+1 - i);
+        end
+    end
+    
+else                 % coronal
+    currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+    sizeI          = size(currMaskMethod, 2); % 256
+    sizeJ          = size(currMaskMethod, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            currMask(currIndex,i,j) = currMaskMethod(sizeJ+1 - j, sizeI+1 - i);
+        end
+    end
+        
+end
 
-imshow( img );
+imshowKeepZoom( img );
 
 setappdata(handles.regionGrow, 'currMask', currMask );
 
