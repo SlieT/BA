@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 01-Apr-2014 18:53:51
+% Last Modified by GUIDE v2.5 06-Apr-2014 14:55:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -101,6 +101,9 @@ elseif isempty(findobj('type','figure','name','segmentation')) == 0
 elseif isempty(findobj('type','figure','name','regionGrow')) == 0
     hreg = getDataMainGui( 'hregionGrow' );
     delete(hreg.output);
+elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
+    hreg = getDataMainGui( 'hmanualSegmentation' );
+    delete(hreg.output);
 end
 
 % Hint: delete(hObject) closes the figure
@@ -178,7 +181,8 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0
+                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'tra', image );
     end
@@ -246,7 +250,8 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0
+                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'sag', image );
     end
@@ -312,7 +317,8 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0
+                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'cor', image );
     end
@@ -541,7 +547,7 @@ setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
 setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'handles'       , handles  );
 setDataMainGui( 'masks'         , struct  );
-setDataMainGui( 'regionGrowDropDownMasks', {}  );
+setDataMainGui( 'dropDownMasks' , {}  );
 
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
@@ -661,8 +667,9 @@ updateCorLines( handles );
 % --- Executes on button press in segment.
 function segment_Callback(hObject, eventdata, handles)
 
-if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-        || isempty(findobj('type','figure','name','regionGrow')) == 0 % == 0 means "no its not empty"
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ... % == 0 means "no its not empty"
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -674,7 +681,8 @@ segmentation;
 function enhanceContrast_Callback(hObject, eventdata, handles)
 
 if isempty(findobj('type','figure','name','segmentation')) == 0 ...
-        || isempty(findobj('type','figure','name','regionGrow')) == 0
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -685,13 +693,25 @@ enhanceContrast;
 % --- Executes on button press in regionGrow.
 function regionGrow_Callback(hObject, eventdata, handles)
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-        || isempty(findobj('type','figure','name','segmentation')) == 0 
+        || isempty(findobj('type','figure','name','segmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
 
 regionGrow;
 
+
+% --- Executes on button press in manualSegmentation.
+function manualSegmentation_Callback(hObject, eventdata, handles)
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+        || isempty(findobj('type','figure','name','segmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 
+    warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
+    return;
+end
+
+manualSegmentation;
 
 % --- Executes during object creation, after setting all properties.
 function transversal_CreateFcn(hObject, eventdata, handles)
@@ -718,8 +738,8 @@ function deleteImage_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-images      = getDataMainGui( 'Images' ); % array
-files       = getDataMainGui( 'files' );  % struct
+images   = getDataMainGui( 'Images' ); % array
+files    = getDataMainGui( 'files' );  % struct
 sldTra   = get( handles.sliderTra, 'Value' );
 sldSag   = get( handles.sliderSag, 'Value' );
 sldCor   = get( handles.sliderCor, 'Value' );
@@ -811,25 +831,35 @@ for i = 1:1:sizeNames
     end
 end
 
-regionGrowDropDownMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+dropDownMasks = getDataMainGui( 'dropDownMasks' );
 sizeI   = size( images );
 newMask = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
 
 % add to struct
 masks.( name ) = newMask;
-regionGrowDropDownMasks{ size(regionGrowDropDownMasks,2) + 1 } = name;
+dropDownMasks{ size(dropDownMasks,2) + 1 } = name;
 
 setDataMainGui( 'masks', masks );
-setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
+setDataMainGui( 'dropDownMasks', dropDownMasks );
 
 % append the name into the regiongrow drowdown if regiongrow fig is alive 
 if isempty(findobj('type','figure','name','regionGrow')) == 0
     hregionGrow = getDataMainGui( 'hregionGrow' ); 
-    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks ); 
+    set( hregionGrow.chooseMask, 'string', dropDownMasks ); 
     
     % if first mask 
     if length(fieldnames(masks)) == 1
         setappdata( hregionGrow.regionGrow, 'currMask', newMask );
+    end
+    
+% append the name into the manualSegmentation drowdown if manualSegmentation fig is alive 
+elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
+    hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' ); 
+    set( hmanualSegmentation.chooseMask, 'string', dropDownMasks ); 
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hmanualSegmentation.manualSegmentation, 'currMask', newMask );
     end
 end
 
@@ -884,20 +914,30 @@ close( h );
 
 % add to struct
 masks.( maskName )          = newMask;
-regionGrowDropDownMasks     = getDataMainGui( 'regionGrowDropDownMasks' );
-regionGrowDropDownMasks{ size(regionGrowDropDownMasks,2) + 1 } = maskName;
+dropDownMasks               = getDataMainGui( 'dropDownMasks' );
+dropDownMasks{ size(dropDownMasks,2) + 1 } = maskName;
 
 setDataMainGui( 'masks', masks );
-setDataMainGui( 'regionGrowDropDownMasks', regionGrowDropDownMasks );
+setDataMainGui( 'dropDownMasks', dropDownMasks );
 
 % append the name into the regiongrow drowdown if regiongrow fig is alive 
 if isempty(findobj('type','figure','name','regionGrow')) == 0
     hregionGrow = getDataMainGui( 'hregionGrow' ); 
-    set( hregionGrow.chooseMask, 'string', regionGrowDropDownMasks );
+    set( hregionGrow.chooseMask, 'string', dropDownMasks );
     
     % if first mask 
     if length(fieldnames(masks)) == 1
         setappdata( hregionGrow.regionGrow, 'currMask', newMask );
+    end
+    
+% append the name into the manualSegmentation drowdown if manualSegmentation fig is alive 
+elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
+    hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' ); 
+    set( hmanualSegmentation.chooseMask, 'string', dropDownMasks ); 
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hmanualSegmentation.manualSegmentation, 'currMask', newMask );
     end
 end
 
@@ -943,11 +983,13 @@ numOfDezimal        = floor( log10(sizeMask) ) + 1;
 numOfDezimalFormat  = strcat( '%0', num2str(numOfDezimal), 'd' );
 
 % save to disk
+h = waitbar(0,'Save mask...');
 for i = 1:1:sizeMask
         addOn = strcat( maskName, '_', num2str(i, numOfDezimalFormat), '.png' );
         fname = fullfile( dirName, addOn );
-        imwrite( currMask(:,:,i), fname, 'png' );   
+        imwrite( currMask(:,:,i), fname, 'png' ); 
+        waitbar(i / sizeMask);
 end
+close( h );
 
-msgbox( 'Images successfully stored.','Save success');
-
+msgbox( 'Mask successfully stored.','Save success');

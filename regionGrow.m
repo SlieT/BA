@@ -74,9 +74,9 @@ setappdata(handles.regionGrow, 'currImgMask'           , 0 );
 setappdata(handles.regionGrow, 'currImgMaskMethod'     , regionMask );
 setappdata(handles.regionGrow, 'currSeedMethod'        , 'New Seeds' );
 setappdata(handles.regionGrow, 'currMask'              , 0 );
-setappdata(handles.regionGrow, 'getpts'                , 0 ); % 0 = no in use
+setappdata(handles.regionGrow, 'getpts'                , 0 ); % 0 = not in use
 % if masks exist set mask
-dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
 if sizeM(1) > 0
     name        = dDMasks{1};
@@ -164,7 +164,7 @@ function seedMask = addSeedsToMask( handles, X, Y )
 
 seedMask = getappdata( handles.regionGrow, 'currSeedMask' );
 
-% round coordinates
+% add
 for i=1:1:size(X)
     seedMask(Y(i), X(i)) = 1;
 end
@@ -177,7 +177,7 @@ function seedMask = deleteSeedsFromMask( handles, X, Y )
 
 seedMask = getappdata( handles.regionGrow, 'currSeedMask' );
 
-% round coordinates
+% delete
 for i=1:1:size(X)
     seedMask(Y(i), X(i)) = 0;
 end
@@ -499,7 +499,7 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 % fill in masks
-dDmasks = getDataMainGui( 'regionGrowDropDownMasks' );
+dDmasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size( dDmasks );
 
 if sizeM(1) == 0
@@ -518,7 +518,7 @@ function chooseMaskMethod_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns chooseMaskMethod contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from chooseMaskMethod
 
-dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
 if sizeM(1) == 0
     warndlg( 'Couldn''t found a mask to use this method on. Create/Load mask first.', 'Attention' );
@@ -617,7 +617,7 @@ function applyToMask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-dDMasks = getDataMainGui( 'regionGrowDropDownMasks' );
+dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
 if sizeM(1) == 0
     warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
