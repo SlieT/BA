@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 06-Apr-2014 21:18:09
+% Last Modified by GUIDE v2.5 06-Apr-2014 23:35:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,14 +62,17 @@ currTraImg  = getappdata( hMain, 'currTraImg' );
 currSagImg  = getappdata( hMain, 'currSagImg' );
 currCorImg  = getappdata( hMain, 'currCorImg' );
 
-setappdata(handles.manualSegmentation, 'currView'              , 'tra');
-setappdata(handles.manualSegmentation, 'currImg'               , currTraImg);
-setappdata(handles.manualSegmentation, 'currTraImg'            , currTraImg );
-setappdata(handles.manualSegmentation, 'currSagImg'            , currSagImg );
-setappdata(handles.manualSegmentation, 'currCorImg'            , currCorImg );
-setappdata(handles.manualSegmentation, 'currImgMask'           , 0 );
-setappdata(handles.manualSegmentation, 'currMask'              , 0 );
-setappdata(handles.manualSegmentation, 'getpts'                , 0 ); % 0 = not in use
+setappdata(handles.manualSegmentation, 'currView'       , 'tra');
+setappdata(handles.manualSegmentation, 'currImg'        , currTraImg);
+setappdata(handles.manualSegmentation, 'currTraImg'     , currTraImg );
+setappdata(handles.manualSegmentation, 'currSagImg'     , currSagImg );
+setappdata(handles.manualSegmentation, 'currCorImg'     , currCorImg );
+setappdata(handles.manualSegmentation, 'currImgMask'    , 0 );
+setappdata(handles.manualSegmentation, 'currMask'       , 0 );
+setappdata(handles.manualSegmentation, 'transparency'   , 0.6 );
+setappdata(handles.manualSegmentation, 'maskColor'      , 'blue' );
+setappdata(handles.manualSegmentation, 'getpts'         , 0 ); % 0 = not in use
+setappdata(handles.manualSegmentation, 'roi'            , 0 );
 % if masks exist set mask
 dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
@@ -319,16 +322,80 @@ if isSet == 0
 end
 
 currImgMask = getappdata(handles.manualSegmentation, 'currImgMask' );
+maskColor   = getappdata(handles.manualSegmentation, 'maskColor' );
 
-blue = cat(3, zeros(size(img)), zeros(size(img)), currImgMask);
-imshowKeepZoom( blue );
+if strcmp( maskColor, 'blue' )
+    mask = cat(3, zeros(size(img)), zeros(size(img)), currImgMask );
 
+elseif strcmp( maskColor, 'red' )
+    mask = cat(3, currImgMask, zeros(size(img)), zeros(size(img)) );
+    
+elseif strcmp( maskColor, 'green' )
+    mask = cat(3, zeros(size(img)), currImgMask, zeros(size(img)) );
+    
+end    
+imshowKeepZoom( mask );
+
+transparency = getappdata(handles.manualSegmentation, 'transparency' );
 hold on;
-alpha = 0.6;
+alpha = transparency;
 alpha_matrix = alpha*ones(size(img,1),size(img,2));
 h = imshowKeepZoom( img );
 set(h,'AlphaData',alpha_matrix);
 hold off;
+
+
+% --- update the current (choosen) mask
+function updateCurrMask( handles )
+
+% set new currImgMask according to current view
+dDMasks = getDataMainGui( 'dropDownMasks' );
+sizeM = size(dDMasks);
+if sizeM(1) == 0
+    warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
+    return;
+end
+
+currMask        = getappdata(handles.manualSegmentation, 'currMask' );
+currImgMask     = getappdata(handles.manualSegmentation, 'currImgMask' );
+hMain           = getDataMainGui( 'handles' );
+currVal         = get(handles.chooseView,'Value'); 
+
+if currVal == 1      % transversal
+    currIndex               = get( hMain.sliderTra, 'Value' );
+	currMask(:,:,currIndex) = currImgMask;
+    
+elseif currVal == 2  % sagittal
+    currIndex      = get( hMain.sliderSag, 'Value' );
+    sizeI          = size(currImgMask, 2); % 256
+    sizeJ          = size(currImgMask, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            currMask(i,currIndex,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
+        end
+    end
+    
+else                 % coronal
+    currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+    sizeI          = size(currImgMask, 2); % 256
+    sizeJ          = size(currImgMask, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            currMask(currIndex,i,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
+        end
+    end
+        
+end
+
+% update the masks struct
+masks           = getDataMainGui( 'masks' );
+contents        = cellstr(get(handles.chooseMask,'String'));
+name            = contents{get(handles.chooseMask,'Value')};
+masks.( name )  = currMask;
+setDataMainGui( 'masks', masks );
+setappdata(handles.manualSegmentation, 'currMask', currMask );
 
 
 % --- Executes on button press in selectPixels.
@@ -362,58 +429,105 @@ end
 
 setappdata( handles.manualSegmentation, 'currImgMask', currImgMask );
 
-% set new currImgMask according to current view
-dDMasks = getDataMainGui( 'dropDownMasks' );
-sizeM = size(dDMasks);
-if sizeM(1) == 0
-    warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
-    return;
-end
-
-currMask        = getappdata(handles.manualSegmentation, 'currMask' );
-hMain           = getDataMainGui( 'handles' );
-img             = getappdata(handles.manualSegmentation, 'currImg' );
-currVal         = get(handles.chooseView,'Value'); 
-
-if currVal == 1      % transversal
-    currIndex               = get( hMain.sliderTra, 'Value' );
-	currMask(:,:,currIndex) = currImgMask;
-    
-elseif currVal == 2  % sagittal
-    currIndex      = get( hMain.sliderSag, 'Value' );
-    sizeI          = size(currImgMask, 2); % 256
-    sizeJ          = size(currImgMask, 1); % 170
-        
-    for i=1:1:sizeI
-        for j=1:1:sizeJ
-            currMask(i,currIndex,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
-        end
-    end
-    
-else                 % coronal
-    currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
-    sizeI          = size(currImgMask, 2); % 256
-    sizeJ          = size(currImgMask, 1); % 170
-        
-    for i=1:1:sizeI
-        for j=1:1:sizeJ
-            currMask(currIndex,i,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
-        end
-    end
-        
-end
-
-% update the masks struct
-masks    = getDataMainGui( 'masks' );
-contents = cellstr(get(handles.chooseMask,'String'));
-name     = contents{get(handles.chooseMask,'Value')};
-masks.( name ) = currMask;
-setDataMainGui( 'masks', masks );
+updateCurrMask( handles );
 
 % redraw image and new mask
+img             = getappdata(handles.manualSegmentation, 'currImg' );
 imshowKeepZoom( img );
 isSet    = get(handles.showMask,'Value');
+showMask( handles, isSet );
+
+setappdata(handles.manualSegmentation, 'getpts', 0);
+
+
+% --- Executes on selection change in maskColor.
+function maskColor_Callback(hObject, eventdata, handles)
+% hObject    handle to maskColor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns maskColor contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from maskColor
+
+contents  = cellstr(get(hObject,'String'));
+maskColor = contents{get(hObject,'Value')};
+setappdata(handles.manualSegmentation, 'maskColor', maskColor );
+
+isSet     = get(handles.showMask,'Value');
+showMask( handles, isSet );
+
+
+% --- Executes during object creation, after setting all properties.
+function maskColor_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maskColor (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function maskTransparency_Callback(hObject, eventdata, handles)
+% hObject    handle to maskTransparency (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of maskTransparency as text
+%        str2double(get(hObject,'String')) returns contents of maskTransparency as a double
+
+val     = str2double(get(hObject,'String'));
+
+if val > 1
+    val = 1;
+elseif val < 0
+    val = 0;
+end
+
+setappdata(handles.manualSegmentation, 'transparency', val );
+
+isSet   = get(handles.showMask,'Value');
 showMask( handles, isSet )
 
-setappdata(handles.manualSegmentation, 'currMask', currMask );
-setappdata(handles.manualSegmentation, 'getpts', 0);
+
+% --- Executes during object creation, after setting all properties.
+function maskTransparency_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to maskTransparency (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in selectRegion.
+function selectRegion_Callback(hObject, eventdata, handles)
+% hObject    handle to selectRegion (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+roi         = getappdata(handles.manualSegmentation, 'roi' );
+currImgMask = getappdata(handles.manualSegmentation, 'currImgMask' );
+
+if roi == 0
+    setappdata(handles.manualSegmentation, 'roi', 1 ); % roi in use
+    roi = roipoly;
+
+    if size(roi, 1) > 0 % cancel?
+        currImgMask(roi) = 1;
+    end
+    
+    setappdata(handles.manualSegmentation, 'currImgMask', currImgMask );
+    setappdata(handles.manualSegmentation, 'roi', 0 );
+    
+    updateCurrMask( handles );
+    isSet = get(handles.showMask,'Value');
+    showMask( handles, isSet );
+else
+    warndlg( 'You can only create one region at a time, delete the current one, then create a new region.', 'Attention' );
+end;
