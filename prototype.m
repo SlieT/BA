@@ -129,11 +129,34 @@ data  = getappdata(hMain);
 disp(data);
 
 
+% --- update the tra slide info
+function updateTraSlide( handles )
+val         = num2str( get( handles.sliderTra, 'Value' ));
+max         = num2str( get( handles.sliderTra, 'Max' ));
+sTraSlide   = strcat( 3, val, '/', max );
+set( handles.traSlide, 'string', sTraSlide );
+
+
+% --- update the sag slide info
+function updateSagSlide( handles )
+val         = num2str( get( handles.sliderSag, 'Value' ));
+max         = num2str( get( handles.sliderSag, 'Max' ));
+sSagSlide   = strcat( 3, val, '/', max );
+set( handles.sagSlide, 'string', sSagSlide );
+
+
+% --- update the cor slide info
+function updateCorSlide( handles )
+val         = num2str( get( handles.sliderCor, 'Value' ));
+max         = num2str( get( handles.sliderCor, 'Max' ));
+sCorSlide   = strcat( 3, val, '/', max );
+set( handles.corSlide, 'string', sCorSlide );
+
+
 function updateTraLines( handles )
 
 axes( handles.transversal );
 handleTraImg = imshow( getDataMainGui( 'currTraImg' ) );
-
 
 if getDataMainGui( 'showLines' )
     lineWidth       = getDataMainGui( 'lineWidth' );
@@ -189,6 +212,7 @@ if newVal ~= -1
 end
 
 updateTraLines( handles );
+updateTraSlide( handles );
 
 
 % --- Executes on slider movement.
@@ -259,6 +283,7 @@ end
 % END update
 
 updateSagLines( handles );
+updateSagSlide( handles );
 
 
 % --- Executes on slider movement.
@@ -326,6 +351,7 @@ end
 % END update
 
 updateCorLines( handles );
+updateCorSlide( handles );
 
 
 % --- Executes on slider movement.
@@ -545,6 +571,7 @@ setDataMainGui( 'fhUpdateSagImg', @updateSagImg  );
 setDataMainGui( 'fhUpdateCorImg', @updateCorImg  );
 setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
 setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
+setDataMainGui( 'fhUpDown'      , @upDown        );
 setDataMainGui( 'handles'       , handles  );
 setDataMainGui( 'masks'         , struct  );
 setDataMainGui( 'dropDownMasks' , {}  );
@@ -555,7 +582,14 @@ updateTraLines( handles );
 updateSagLines( handles );
 updateCorLines( handles );
 
-set( handles.uipanelAdjust, 'Visible', 'on' );
+set( handles.uipanelAdjust  , 'Visible', 'on' );
+set( handles.traSlide       , 'Visible', 'on' );
+set( handles.sagSlide       , 'Visible', 'on' );
+set( handles.corSlide       , 'Visible', 'on' );
+
+updateTraSlide( handles );
+updateSagSlide( handles );
+updateCorSlide( handles );
 
 
 % --------------------------------------------------------------------
@@ -817,7 +851,20 @@ end
 w       = warndlg('Before you create a mask, DELETE all unnesecarry images FIRST because the mask is fixed at its size.', 'Warning');
 waitfor(w);
 name    = inputdlg('Name of new Mask:', 'Create Mask');
+
+% if cancel
+if size(name, 1) == 0
+    return;
+end
+
 name    = name{1};
+
+% if space
+k = strfind(name, ' ');
+if size(k, 1) >= 1 
+    warndlg( 'No space character('' '') in the maskname allowed.', 'Warning');
+    return;
+end
 
 % if name already exists
 masks         = getDataMainGui( 'masks' );
@@ -860,6 +907,11 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
     % if first mask 
     if length(fieldnames(masks)) == 1
         setappdata( hmanualSegmentation.manualSegmentation, 'currMask', newMask );
+        
+        fhUpdateCurrImgMask = getDataMainGui( 'fhUpdateCurrImgMask' );
+        hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' );
+        axes( hmanualSegmentation.testView );
+        feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
 
@@ -938,6 +990,11 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
     % if first mask 
     if length(fieldnames(masks)) == 1
         setappdata( hmanualSegmentation.manualSegmentation, 'currMask', newMask );
+        
+        fhUpdateCurrImgMask = getDataMainGui( 'fhUpdateCurrImgMask' );
+        hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' );
+        axes( hmanualSegmentation.testView );
+        feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
 
@@ -993,3 +1050,55 @@ end
 close( h );
 
 msgbox( 'Mask successfully stored.','Save success');
+
+
+% --- "upDown" function for the "+" or "-" button in external views
+function upDown( externalWindowHandler, isUp )
+
+handles         = externalWindowHandler;
+handlesMain     = getDataMainGui( 'handles' );
+currView        = get( handles.chooseView, 'Value' ); 
+
+% get val and max according to view
+if currView == 1
+    val             = get( handlesMain.sliderTra, 'Value' );
+    max             = get( handlesMain.sliderTra, 'Max' );
+    min             = get( handlesMain.sliderTra, 'Min' );
+elseif currView == 2
+    val             = get( handlesMain.sliderSag, 'Value' );
+    max             = get( handlesMain.sliderSag, 'Max' );
+    min             = get( handlesMain.sliderSag, 'Min' );
+elseif currView == 3
+    val             = get( handlesMain.sliderCor, 'Value' );
+    max             = get( handlesMain.sliderCor, 'Max' );
+    min             = get( handlesMain.sliderCor, 'Min' );
+end
+
+if isUp
+    val = val + 1;
+    if val > max
+        return; 
+    end
+else
+    val = val - 1;
+    if val < min
+        return;
+    end
+end
+
+% update img/slider according to view
+if currView == 1
+    set( handlesMain.sliderTra, 'Value', val );
+    fhUpdateTraImg  = getDataMainGui( 'fhUpdateTraImg' );
+    feval( fhUpdateTraImg, val, handlesMain );
+elseif currView == 2
+    set( handlesMain.sliderSag, 'Value', val );
+    fhUpdateSagImg  = getDataMainGui( 'fhUpdateSagImg' );
+    feval( fhUpdateSagImg, val, handlesMain );
+elseif currView == 3
+    set( handlesMain.sliderCor, 'Value', val );
+    fhUpdateCorImg  = getDataMainGui( 'fhUpdateCorImg' );
+    feval( fhUpdateCorImg, val, handlesMain );
+end
+
+axes( handles.testView );

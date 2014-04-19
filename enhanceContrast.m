@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 05-Mar-2014 13:08:48
+% Last Modified by GUIDE v2.5 19-Apr-2014 01:09:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -344,6 +344,64 @@ function applyToView_Callback(hObject, eventdata, handles)
 applyToView( handles, 1 );
 
 
+% --- Executes on button press in applyToImage.
+function applyToImage_Callback(hObject, eventdata, handles)
+% hObject    handle to applyToImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+currFigure  = gcf();
+images      = getDataMainGui( 'Images' );
+currTestImg = getappdata( handles.enhanceContrast, 'currTestImg' );
+currCiew     = get(handles.chooseView,'Value'); 
+hMain       = getDataMainGui( 'handles' );
+
+% apply current image
+if currCiew == 1      % transversal
+    currIndex             = get( hMain.sliderTra, 'Value' );
+	images(:,:,currIndex) = currTestImg;
+    
+elseif currCiew == 2  % sagittal
+    currIndex      = get( hMain.sliderSag, 'Value' );
+    sizeI          = size(currTestImg, 2); % 256
+    sizeJ          = size(currTestImg, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            images(i,currIndex,j) = currTestImg(sizeJ+1 - j, i);
+        end
+    end
+    
+else                 % coronal
+    currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+    sizeI          = size(currTestImg, 2); % 256
+    sizeJ          = size(currTestImg, 1); % 170
+        
+    for i=1:1:sizeI
+        for j=1:1:sizeJ
+            images(currIndex,i,j) = currTestImg(sizeJ+1 - j, i);
+        end
+    end
+        
+end
+
+setDataMainGui( 'Images', images );
+
+% update hMain
+hMain        = getDataMainGui( 'handles' );
+fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
+fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
+fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
+
+% functionEvaluation
+feval( fhUpdateTraImg, get( hMain.sliderTra, 'Value' ), hMain );
+feval( fhUpdateSagImg, get( hMain.sliderSag, 'Value' ), hMain );
+feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
+
+% set currFigure as the current figure
+figure( currFigure );
+
+
 % --- Executes on button press in applyToImages.
 function applyToImages_Callback(hObject, eventdata, handles)
 % hObject    handle to applyToImages (see GCBO)
@@ -369,15 +427,15 @@ setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
 
 % update hMain
-handles        = getDataMainGui( 'handles' );
+hMain        = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
 fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
 fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
 
 % functionEvaluation
-feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
-feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
-feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
+feval( fhUpdateTraImg, get( hMain.sliderTra, 'Value' ), hMain );
+feval( fhUpdateSagImg, get( hMain.sliderSag, 'Value' ), hMain );
+feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
 
 % set currFigure as the current figure
 figure( currFigure );
@@ -490,7 +548,7 @@ currVal     = get(hObject,'Value');
 if currVal == 1      % Distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'imadjust' );
     set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones. Method: imadjust' );
+    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones.' );
 elseif currVal == 2  % Weighted distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'gamma' );
     set( handles.valuePanel , 'visible', 'on' );
@@ -498,7 +556,7 @@ elseif currVal == 2  % Weighted distribute intensities
     set( handles.val1       , 'string' , '1');
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
-    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end. Method: imadjust( ... , gamma )' );
+    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end.' );
 elseif currVal == 3  % Adaptive histogram equalization
     setappdata(handles.enhanceContrast, 'currMethod', 'adapthisteq' );
     set( handles.valuePanel , 'visible', 'on' );
@@ -514,7 +572,7 @@ elseif currVal == 3  % Adaptive histogram equalization
 elseif currVal == 4  % Complement 
     setappdata(handles.enhanceContrast, 'currMethod', 'imcomplement' );
     set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string' , 'This method complements the current image. Method: imcomplement' );
+    set( handles.infoText   , 'string' , 'This method complements the current image.' );
 elseif currVal == 5  % Logarithmic transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'log' );
     set( handles.valuePanel , 'visible', 'on' );
@@ -536,7 +594,7 @@ elseif currVal == 6  % Contrast-stretching transformation
     set( handles.val2       , 'visible', 'on' );
     set( handles.val2       , 'string' , 'see tooltip');
     set( handles.val2       , 'tooltipString', 'if m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/65535).');
-    set( handles.infoText   , 'string' , '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values. Method: 1/(1 + (m/(f + eps))^E)' );
+    set( handles.infoText   , 'string' , '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values.' );
 end
 
 
@@ -559,6 +617,67 @@ function infoText_ButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to infoText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-if strcmp(get( hObject, 'string' ), '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values. Method: 1/(1 + (m/(f + eps))^E)')
+if strcmp(get( hObject, 'string' ), '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values.')
     contrastStretchHelp
 end
+
+
+% --- Executes when enhanceContrast is resized.
+function enhanceContrast_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to enhanceContrast (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% uipanel2 and testView have the property "units" set to "normalized"
+
+oldUnits        = get(hObject,'Units');
+set(hObject,'Units','pixels');
+figPos          = get(hObject,'Position');
+
+% set infoText
+set(handles.infoText,'Units','pixels');
+infoTextPos     = get(handles.infoText,'Position');
+% upos          = left, bottom, widht, height
+% new bottom    = heightFigure-hightInfo-7pxDefaultSpace(the space between infoText and upper border of the figure)
+% 7pxDefaultSpace = figPos(4) - infoTextPos(2) - infoTextPos(4)
+newBottom       = figPos(4) - infoTextPos(4) - 7;
+upos            = [infoTextPos(1), newBottom, infoTextPos(3), infoTextPos(4)];
+set(handles.infoText,'Position',upos);
+
+% set methodPanel
+set(handles.methodPanel,'Units','pixels');
+methodPanelPos      = get(handles.methodPanel,'Position');
+newBottom           = figPos(4) - methodPanelPos(4) - 49;
+oldUnitsUIPanel2    = get(handles.uipanel2,'Units');
+set(handles.uipanel2,'Units','pixels');
+UIPanel2Pos         = get(handles.uipanel2,'Position');
+%methodPanelPos(1)-(UIPanel2Pos(1)+UIPanel2Pos(3)) = 32 % space between
+%uipanel2 and methodPanel
+newLeft             = UIPanel2Pos(1) + UIPanel2Pos(3) + 32;
+%newLeft         = figPos(3) - methodPanelPos(3) - 21; % keep method Panel
+%on the right edge
+upos                = [newLeft, newBottom, methodPanelPos(3), methodPanelPos(4)];
+set(handles.methodPanel,'Position',upos);
+set(handles.uipanel2,'Units',oldUnitsUIPanel2);
+
+set(hObject,'Units',oldUnits);
+
+
+% --- Executes on button press in up.
+function up_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, true );
+
+
+% --- Executes on button press in up.
+function down_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, false );

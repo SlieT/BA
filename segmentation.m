@@ -22,7 +22,7 @@ function varargout = segmentation(varargin)
 
 % Edit the above text to modify the response to help segmentation
 
-% Last Modified by GUIDE v2.5 28-Mar-2014 15:56:32
+% Last Modified by GUIDE v2.5 19-Apr-2014 14:38:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -417,30 +417,30 @@ function applyToView_Callback(hObject, eventdata, handles)
 applyToView( handles, 1 );
 
 
-% --- Executes on button press in applyToImages.
-function applyToImages_Callback(hObject, eventdata, handles)
-% hObject    handle to applyToImages (see GCBO)
+% --- Executes on button press in applyToImage.
+function applyToImage_Callback(hObject, eventdata, handles)
+% hObject    handle to applyToImage (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
 currFigure  = gcf();
 images      = getDataMainGui( 'Images' );
 currMethod  = get( handles.chooseMethod, 'Value' );
+currTestImg = getappdata( handles.segmentation, 'currTestImg' );
+currView    = get( handles.chooseView, 'Value' );
+hMain       = getDataMainGui( 'handles' );
 
 % if single image methode
 % if "Cut out inner/outer circle"
 if currMethod == 3 
-    % get current View, get current slider index
-    currView        = get( handles.chooseView, 'Value' );
-    mainHandles     = getDataMainGui('handles');
     currTestImgRoi  = getappdata( handles.segmentation, 'currTestImgRoi' );
     
     if currView == 1        % tra
-        currImgIndex = get( mainHandles.sliderTra, 'Value' );
+        currImgIndex = get( hMain.sliderTra, 'Value' );
         images(:,:,currImgIndex) = currTestImgRoi;
         
     elseif currView == 2    % sag
-        currImgIndex   = get( mainHandles.sliderSag, 'Value' );
+        currImgIndex   = get( hMain.sliderSag, 'Value' );
         img            = images(:,currImgIndex,:);
         sizeI          = size(img, 1); % 256
         sizeJ          = size(img, 3); % 170
@@ -452,7 +452,7 @@ if currMethod == 3
         end
 
     else                    % cor
-        currImgIndex   = get( mainHandles.sliderCor, 'Max' )+1 - get( mainHandles.sliderCor, 'Value' );
+        currImgIndex   = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
         img            = images(currImgIndex,:,:);
         sizeI          = size(img, 2); % 256
         sizeJ          = size(img, 3); % 170
@@ -467,36 +467,90 @@ if currMethod == 3
     setappdata( handles.segmentation, 'methodHistoryThisImage'         , {} );
 	setappdata( handles.segmentation, 'methodHistoryIndexThisImage'    , 0 );
     
+
 else
-    s           = size( images );
-    numImages   = s( 3 );
-    mH          = getappdata( handles.segmentation, 'methodHistoryAllImages' );
-    mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndexAllImages' );
-
-
-    % apply methodHistoryAllImages to all images
-    for i = numImages:-1:1
-        img           = images(:,:,i);
-        img           = applyMethods( img, mH, mHIndex, handles );
-        images(:,:,i) = img(:,:);
+    if currView == 1      % transversal
+        currIndex             = get( hMain.sliderTra, 'Value' );
+        images(:,:,currIndex) = currTestImg;
+    
+    elseif currView == 2  % sagittal
+        currIndex      = get( hMain.sliderSag, 'Value' );
+        sizeI          = size(currTestImg, 2); % 256
+        sizeJ          = size(currTestImg, 1); % 170
+        
+        for i=1:1:sizeI
+            for j=1:1:sizeJ
+                images(i,currIndex,j) = currTestImg(sizeJ+1 - j, i);
+            end
+        end
+    
+    else                 % coronal
+        currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+        sizeI          = size(currTestImg, 2); % 256
+        sizeJ          = size(currTestImg, 1); % 170
+        
+        for i=1:1:sizeI
+            for j=1:1:sizeJ
+                images(currIndex,i,j) = currTestImg(sizeJ+1 - j, i);
+            end
+        end 
     end
-
-    setappdata( handles.segmentation, 'methodHistoryAllImages'         , {} );
-	setappdata( handles.segmentation, 'methodHistoryIndexAllImages'    , 0 );
 end
 
 setDataMainGui( 'Images', images );
    
 % update hMain
-handles        = getDataMainGui( 'handles' );
+hMain          = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
 fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
 fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
 
 % functionEvaluation
-feval( fhUpdateTraImg, get( handles.sliderTra, 'Value' ), handles );
-feval( fhUpdateSagImg, get( handles.sliderSag, 'Value' ), handles );
-feval( fhUpdateCorImg, get( handles.sliderCor, 'Value' ), handles );
+feval( fhUpdateTraImg, get( hMain.sliderTra, 'Value' ), hMain );
+feval( fhUpdateSagImg, get( hMain.sliderSag, 'Value' ), hMain );
+feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
+
+% set currFigure as the current figure
+figure( currFigure );
+
+
+% --- Executes on button press in applyToImages.
+function applyToImages_Callback(hObject, eventdata, handles)
+% hObject    handle to applyToImages (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+currFigure  = gcf();
+images      = getDataMainGui( 'Images' );
+s           = size( images );
+numImages   = s( 3 );
+mH          = getappdata( handles.segmentation, 'methodHistoryAllImages' );
+mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndexAllImages' );
+
+
+% apply methodHistoryAllImages to all images
+for i = numImages:-1:1
+    img           = images(:,:,i);
+    img           = applyMethods( img, mH, mHIndex, handles );
+    images(:,:,i) = img(:,:);
+end
+
+setappdata( handles.segmentation, 'methodHistoryAllImages'         , {} );
+setappdata( handles.segmentation, 'methodHistoryIndexAllImages'    , 0 );
+
+
+setDataMainGui( 'Images', images );
+   
+% update hMain
+hMain          = getDataMainGui( 'handles' );
+fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
+fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
+fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
+
+% functionEvaluation
+feval( fhUpdateTraImg, get( hMain.sliderTra, 'Value' ), hMain );
+feval( fhUpdateSagImg, get( hMain.sliderSag, 'Value' ), hMain );
+feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
 
 % set currFigure as the current figure
 figure( currFigure );
@@ -508,7 +562,6 @@ function chooseView_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from chooseView
 
 currVal     = get(hObject,'Value'); 
-
 
 if currVal == 1      % transversal
     currImg       = getDataMainGui( 'currTraImg' );
@@ -671,8 +724,8 @@ if currVal == 1      % Trim to rectangle *
     rows        = getDataMainGui( 'traRows' );
     columns     = getDataMainGui( 'traColumns' );
     set( handles.val2           , 'string'  , strcat( num2str(rows), ',', num2str(columns) ) );
-    set( handles.applyToImages  , 'string'  , 'Apply new values to all images' );
-    set( handles.applyToImages  , 'tooltip' , 'This will most likley take some time, depending on the amount of images and methods used.' );
+    set( handles.applyToImage   , 'visible' , 'off' );
+    set( handles.applyToImages  , 'visible' , 'on' );
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
     set( handles.newCircle      , 'visible' , 'off' ); 
@@ -688,8 +741,8 @@ elseif currVal == 2  % New interval of gray levels
     set( handles.val2           , 'visible' , 'on' );
     set( handles.textVal2       , 'string'  , 'New max' );
     set( handles.val2           , 'string'  , 'Max' );
-    set( handles.applyToImages  , 'string'  , 'Apply new values to all images' );
-    set( handles.applyToImages  , 'tooltip' , 'This will most likley take some time, depending on the amount of images and methods used.' );
+    set( handles.applyToImage   , 'visible' , 'on' );
+    set( handles.applyToImages  , 'visible' , 'on' );
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
     set( handles.newCircle      , 'visible' , 'off' ); 
@@ -707,8 +760,8 @@ elseif currVal == 3 % Cut out inner/outer circle
     set( handles.val1           , 'string'  , 'outer');
     set( handles.textVal2       , 'visible' , 'off' );
     set( handles.val2           , 'visible' , 'off' );
-    set( handles.applyToImages  , 'string'  , 'Apply only to this image' );
-    set( handles.applyToImages  , 'tooltip' , '' );
+    set( handles.applyToImage   , 'visible' , 'on' );
+    set( handles.applyToImages  , 'visible' , 'off' );
     set( handles.newCircle      , 'visible' , 'on' ); 
     set( handles.applyToView    , 'visible' , 'off' );
     set( handles.undo           , 'string'  , 'Undo only this method' );
@@ -790,3 +843,63 @@ else
     warndlg( 'You can only create one circle at a time, delete the current one, then create a new circle.', 'Attention' );
 end;
 
+
+% --- Executes when segmentation is resized.
+function segmentation_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to segmentation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% uipanel2 and testView have the property "units" set to "normalized"
+
+oldUnits        = get(hObject,'Units');
+set(hObject,'Units','pixels');
+figPos          = get(hObject,'Position');
+
+% set infoText
+set(handles.infoText,'Units','pixels');
+infoTextPos     = get(handles.infoText,'Position');
+% upos          = left, bottom, widht, height
+% new bottom    = heightFigure-hightInfo-7pxDefaultSpace(the space between infoText and upper border of the figure)
+% 7pxDefaultSpace = figPos(4) - infoTextPos(2) - infoTextPos(4)
+newBottom       = figPos(4) - infoTextPos(4) - 7;
+upos            = [infoTextPos(1), newBottom, infoTextPos(3), infoTextPos(4)];
+set(handles.infoText,'Position',upos);
+
+% set methodPanel
+set(handles.methodPanel,'Units','pixels');
+methodPanelPos      = get(handles.methodPanel,'Position');
+newBottom           = figPos(4) - methodPanelPos(4) - 49;
+oldUnitsUIPanel2    = get(handles.uipanel2,'Units');
+set(handles.uipanel2,'Units','pixels');
+UIPanel2Pos         = get(handles.uipanel2,'Position');
+%methodPanelPos(1)-(UIPanel2Pos(1)+UIPanel2Pos(3)) = 32 % space between
+%uipanel2 and methodPanel
+newLeft             = UIPanel2Pos(1) + UIPanel2Pos(3) + 32;
+%newLeft         = figPos(3) - methodPanelPos(3) - 21; % keep method Panel
+%on the right edge
+upos                = [newLeft, newBottom, methodPanelPos(3), methodPanelPos(4)];
+set(handles.methodPanel,'Position',upos);
+set(handles.uipanel2,'Units',oldUnitsUIPanel2);
+
+set(hObject,'Units',oldUnits);
+
+
+% --- Executes on button press in up.
+function up_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, true );
+
+
+% --- Executes on button press in up.
+function down_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, false );

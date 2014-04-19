@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 06-Apr-2014 23:35:15
+% Last Modified by GUIDE v2.5 18-Apr-2014 23:38:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -82,7 +82,7 @@ if sizeM(1) > 0
     currMask    = masks.( name );
     setappdata(handles.manualSegmentation, 'currMask'          , currMask );
     
-    updateCurrImgMask( handles );
+    updateCurrImgMask( handles, 0 );
 end
 
 imshow( currTraImg );
@@ -90,6 +90,7 @@ imshow( currTraImg );
 % set global data
 setDataMainGui( 'hmanualSegmentation', handles );
 setDataMainGui( 'fhUpdateTestView', @updateTestView );
+setDataMainGui( 'fhUpdateCurrImgMask', @updateCurrImgMask );
 
 % Update handles structure
 guidata(hObject, handles);
@@ -172,9 +173,7 @@ setappdata(handles.manualSegmentation, 'currImg', currImg);
 
 imshowKeepZoom( currImg );
 
-updateCurrImgMask( handles );
-isSet = get(handles.showMask,'Value');
-showMask( handles, isSet );
+updateCurrImgMask( handles, 1 );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -209,9 +208,7 @@ if strcmp(currView,view)
 
     imshowKeepZoom( currImg );
     
-    updateCurrImgMask( handles );
-    isSet = get(handles.showMask,'Value');
-    showMask( handles, isSet );
+    updateCurrImgMask( handles, 1 );
 end
 
 
@@ -228,14 +225,19 @@ masks    = getDataMainGui( 'masks' );
 contents = cellstr(get(hObject,'String'));
 name     = contents{get(hObject,'Value')};
 
+dDMasks  = getDataMainGui( 'dropDownMasks' );
+sizeM    = size(dDMasks);
+if sizeM(1) == 0
+    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    return;
+end
+
 % read from struct
 currMask = masks.( name );
 setappdata(handles.manualSegmentation, 'currMask', currMask );
 
 % update testView
-updateCurrImgMask( handles );
-isSet    = get(handles.showMask,'Value');
-showMask( handles, isSet );
+updateCurrImgMask( handles, 1 );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -262,7 +264,15 @@ set( hObject, 'string', dDmasks );
 
 
 % update the current image mask
-function currImgMask = updateCurrImgMask( handles )
+function currImgMask = updateCurrImgMask( handles, show )
+
+% if no mask return
+dDmasks = getDataMainGui( 'dropDownMasks' );
+sizeM = size( dDmasks );
+
+if sizeM(1) == 0
+    return;
+end
 
 % updateTestView mit dem zweck currentImgMask zu setzen
 currMask        = getappdata(handles.manualSegmentation, 'currMask' );
@@ -299,6 +309,11 @@ end
 
 setappdata(handles.manualSegmentation, 'currImgMask' , currImgMask );
 
+if show
+    isSet    = get(handles.showMask,'Value');
+    showMask( handles, isSet );
+end
+
 % --- Executes on button press in showMask.
 function showMask_Callback(hObject, eventdata, handles)
 % hObject    handle to showMask (see GCBO)
@@ -306,6 +321,13 @@ function showMask_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of showMask
+
+dDMasks  = getDataMainGui( 'dropDownMasks' );
+sizeM    = size(dDMasks);
+if sizeM(1) == 0
+    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    return;
+end
 
 isSet           = get(hObject,'Value');
 showMask( handles, isSet );
@@ -531,3 +553,72 @@ if roi == 0
 else
     warndlg( 'You can only create one region at a time, delete the current one, then create a new region.', 'Attention' );
 end;
+
+
+% --- Executes when manualSegmentation is resized.
+function manualSegmentation_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to manualSegmentation (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% uipanel2 and testView have the property "units" set to "normalized"
+
+oldUnits        = get(hObject,'Units');
+set(hObject,'Units','pixels');
+figPos          = get(hObject,'Position');
+
+% set infoText
+set(handles.infoText,'Units','pixels');
+infoTextPos     = get(handles.infoText,'Position');
+% upos          = left, bottom, widht, height
+% new bottom    = heightFigure-hightInfo-7pxDefaultSpace(the space between infoText and upper border of the figure)
+% 7pxDefaultSpace = figPos(4) - infoTextPos(2) - infoTextPos(4)
+newBottom       = figPos(4) - infoTextPos(4) - 7;
+upos            = [infoTextPos(1), newBottom, infoTextPos(3), infoTextPos(4)];
+set(handles.infoText,'Position',upos);
+
+% set methodPanel
+set(handles.methodPanel,'Units','pixels');
+methodPanelPos      = get(handles.methodPanel,'Position');
+newBottom           = figPos(4) - methodPanelPos(4) - 49;
+oldUnitsUIPanel2    = get(handles.uipanel2,'Units');
+set(handles.uipanel2,'Units','pixels');
+UIPanel2Pos         = get(handles.uipanel2,'Position');
+%methodPanelPos(1)-(UIPanel2Pos(1)+UIPanel2Pos(3)) = 32 % space between
+%uipanel2 and methodPanel
+newLeft             = UIPanel2Pos(1) + UIPanel2Pos(3) + 32;
+%newLeft         = figPos(3) - methodPanelPos(3) - 21; % keep method Panel
+%on the right edge
+upos                = [newLeft, newBottom, methodPanelPos(3), methodPanelPos(4)];
+set(handles.methodPanel,'Position',upos);
+set(handles.uipanel2,'Units',oldUnitsUIPanel2);
+
+set(hObject,'Units',oldUnits);
+
+
+
+% --- Executes when uipanel2 is resized.
+function uipanel2_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to uipanel2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in up.
+function up_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, true );
+
+
+% --- Executes on button press in up.
+function down_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, false );

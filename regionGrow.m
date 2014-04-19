@@ -22,7 +22,7 @@ function varargout = regionGrow(varargin)
 
 % Edit the above text to modify the response to help regionGrow
 
-% Last Modified by GUIDE v2.5 03-Apr-2014 17:44:02
+% Last Modified by GUIDE v2.5 18-Apr-2014 23:40:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,17 +64,19 @@ currCorImg  = getappdata( hMain, 'currCorImg' );
 seedMask    = false(size( currTraImg ));
 regionMask  = false(size( currTraImg ));
 
-setappdata(handles.regionGrow, 'currView'              , 'tra');
-setappdata(handles.regionGrow, 'currImg'               , currTraImg);
-setappdata(handles.regionGrow, 'currTraImg'            , currTraImg );
-setappdata(handles.regionGrow, 'currSagImg'            , currSagImg );
-setappdata(handles.regionGrow, 'currCorImg'            , currCorImg );
-setappdata(handles.regionGrow, 'currSeedMask'          , seedMask );
-setappdata(handles.regionGrow, 'currImgMask'           , 0 );
-setappdata(handles.regionGrow, 'currImgMaskMethod'     , regionMask );
-setappdata(handles.regionGrow, 'currSeedMethod'        , 'New Seeds' );
-setappdata(handles.regionGrow, 'currMask'              , 0 );
-setappdata(handles.regionGrow, 'getpts'                , 0 ); % 0 = not in use
+setappdata(handles.regionGrow, 'currView'           , 'tra');
+setappdata(handles.regionGrow, 'currImg'            , currTraImg);
+setappdata(handles.regionGrow, 'currTraImg'         , currTraImg );
+setappdata(handles.regionGrow, 'currSagImg'         , currSagImg );
+setappdata(handles.regionGrow, 'currCorImg'         , currCorImg );
+setappdata(handles.regionGrow, 'currSeedMask'       , seedMask );
+setappdata(handles.regionGrow, 'currImgMask'        , 0 );
+setappdata(handles.regionGrow, 'currImgMaskMethod'  , regionMask );
+setappdata(handles.regionGrow, 'currSeedMethod'     , 'New Seeds' );
+setappdata(handles.regionGrow, 'currMask'           , 0 );
+setappdata(handles.regionGrow, 'getpts'             , 0 ); % 0 = not in use
+setappdata(handles.regionGrow, 'isTransparent'      , 1 );
+setappdata(handles.regionGrow, 'alpha'              , 0.6 );
 % if masks exist set mask
 dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
@@ -87,12 +89,20 @@ end
 
 imshow( currTraImg );
 
+
 % set global data
 setDataMainGui( 'hregionGrow', handles );
 setDataMainGui( 'fhUpdateTestView', @updateTestView );
 
 % Update handles structure
 guidata(hObject, handles);
+
+% show default mask if available
+dDMasks = getDataMainGui( 'dropDownMasks' );
+sizeM = size(dDMasks);
+if sizeM(1) ~= 0
+    applyToView( handles, 0 );
+end
 
 % clear the command line
 clc;
@@ -254,11 +264,13 @@ end
 % --- applies to view
 function applyToView( handles, applyMethod )
 
-% image or view change, or method undo
+% image or view change
 if applyMethod == 0
     % get current image
     currImg = getappdata(handles.regionGrow, 'currImg' );
-    imshowKeepZoom( currImg );     
+    imshowKeepZoom( currImg );
+    
+    showMaskMethod( handles );
     return;
 end
 
@@ -289,6 +301,8 @@ alpha_matrix = alpha*ones(size(g,1),size(g,2));
 h = imshowKeepZoom( img );
 set(h,'AlphaData',alpha_matrix);
 hold off;
+
+showMaskMethod( handles );
 
 
 % --- Executes on button press in applyToView.
@@ -452,7 +466,10 @@ if thresh < 0
     thresh = 0;
 end
 
-set( hObject, 'string', thresh );    
+set( hObject, 'string', thresh );   
+
+% invoke regiongrow
+applyToView( handles, 1 );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -481,9 +498,18 @@ masks    = getDataMainGui( 'masks' );
 contents = cellstr(get(hObject,'String'));
 name     = contents{get(hObject,'Value')};
 
+dDMasks  = getDataMainGui( 'dropDownMasks' );
+sizeM    = size(dDMasks);
+if sizeM(1) == 0
+    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    return;
+end
+
 % read from struct
 currMask = masks.( name );
 setappdata(handles.regionGrow, 'currMask', currMask );
+
+showMaskMethod( handles );
 
 
 % --- Executes during object creation, after setting all properties.
@@ -509,31 +535,10 @@ end
 set( hObject, 'string', dDmasks );
 
 
-% --- Executes on selection change in chooseMaskMethod.
-function chooseMaskMethod_Callback(hObject, eventdata, handles)
-% hObject    handle to chooseMaskMethod (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns chooseMaskMethod contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from chooseMaskMethod
-
-dDMasks = getDataMainGui( 'dropDownMasks' );
-sizeM = size(dDMasks);
-if sizeM(1) == 0
-    warndlg( 'Couldn''t found a mask to use this method on. Create/Load mask first.', 'Attention' );
-    return;
-end
-
-currMethod      = get(hObject,'Value');
-img             = getappdata(handles.regionGrow, 'currImg' );
-currMask        = getappdata(handles.regionGrow, 'currMask' );
-currImgMask     = getappdata(handles.regionGrow, 'currImgMask' );
-% if regiongrow hasn't been used yet create empty mask
-if currImgMask == 0
-    currImgMask = zeros(size(img));
-end
+% --- retuns the current default mask
+function currDefaultMask = getCurrDefaultMask( handles ) 
 hMain           = getDataMainGui( 'handles' );
+currMask        = getappdata(handles.regionGrow, 'currMask' );
 
 % get mask according to current View
 currVal         = get(handles.chooseView,'Value'); 
@@ -565,36 +570,119 @@ else                 % coronal
     
 end
 
+
+% --- show the current mask method
+function showMaskMethod( handles )
+
+dDMasks = getDataMainGui( 'dropDownMasks' );
+sizeM = size(dDMasks);
+if sizeM(1) == 0
+    return;
+end
+
+currMethod      = get(handles.chooseMaskMethod,'Value');
+img             = getappdata(handles.regionGrow, 'currImg' );
+currImgMask     = getappdata(handles.regionGrow, 'currImgMask' );
+% if regiongrow hasn't been used yet create empty mask
+if currImgMask == 0
+    currImgMask = zeros(size(img));
+end
+
+currDefaultMask = getCurrDefaultMask( handles );
+isTrans = getappdata(handles.regionGrow, 'isTransparent');
+
 % what method?
 if currMethod == 1      % New/Renew Mask
-    greenblue           = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshowKeepZoom( greenblue );
+    if isTrans
+        colorMask           = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
+    else
+        % cut out mask
+        img(currImgMask         ==1) = 0;
+        img(currDefaultMask     ==1) = 0;
+        % set maskcolor to max
+        green = img;
+        blue  = img;
+        green(currImgMask       ==1) = 65535;
+        blue(currDefaultMask    ==1) = 65535;
+        colorMask                    = cat(3, img, green, blue);
+    end
+    imshowKeepZoom( colorMask );
 
-elseif currMethod == 2  % Add to current Mask
+elseif currMethod == 2  % New/Renew Mask (show seeded mask)
+    if isTrans
+        colorMask           = cat(3, zeros(size(img)), currImgMask, zeros(size(img)));
+    else
+        img(currImgMask         ==1) = 0;
+        green = img;
+        green(currImgMask       ==1) = 65535;
+        colorMask                    = cat(3, img, green, img);
+    end
+    imshowKeepZoom( colorMask );
+    
+elseif currMethod == 3  % Add to current Mask
     currImgMask( currDefaultMask==1 ) = 0;
-    greenblue = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshowKeepZoom( greenblue );
+    if isTrans
+        colorMask = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
+    else
+        % cut out mask
+        img(currImgMask         ==1) = 0;
+        img(currDefaultMask     ==1) = 0;
+        % set maskcolor to max
+        green = img;
+        blue  = img;
+        green(currImgMask       ==1) = 65535;
+        blue(currDefaultMask    ==1) = 65535;
+        colorMask                    = cat(3, img, green, blue);
+    end
+    imshowKeepZoom( colorMask );
     currDefaultMask( currImgMask==1 ) = 1;
     currImgMask = currDefaultMask;
     
-elseif currMethod == 3  % Delete from current Mask
+elseif currMethod == 4  % Delete from current Mask
     % mask is only the overlapping
     currImgMask( currDefaultMask==1 - currImgMask==1 == 0 ) = 1;
     currImgMask( currDefaultMask==1 - currImgMask==1 > 0 ) = 0;
-    greenblue = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
-    imshowKeepZoom( greenblue );
+    if isTrans
+        colorMask = cat(3, zeros(size(img)), currImgMask, currDefaultMask);
+    else
+        % cut out mask
+        img(currImgMask         ==1) = 0;
+        img(currDefaultMask     ==1) = 0;
+        % set maskcolor to max
+        green = img;
+        blue  = img;
+        green(currImgMask       ==1) = 65535;
+        blue(currDefaultMask    ==1) = 65535;
+        colorMask                    = cat(3, img, green, blue);
+    end
+    imshowKeepZoom( colorMask );
     % delete the overlapping
     currDefaultMask( currImgMask==1 ) = 0;
     currImgMask = currDefaultMask;
 end
+
 setappdata(handles.regionGrow, 'currImgMaskMethod', currImgMask );
 
-hold on;
-alpha = 0.6;
-alpha_matrix = alpha*ones(size(img,1),size(img,2));
-h = imshowKeepZoom( img );
-set(h,'AlphaData',alpha_matrix);
-hold off;
+if isTrans
+    hold on;
+    alpha = getappdata(handles.regionGrow, 'alpha' );
+    alpha_matrix = alpha*ones(size(img,1),size(img,2));
+    h = imshowKeepZoom( img );
+    set(h,'AlphaData',alpha_matrix);
+    hold off;
+end
+
+
+% --- Executes on selection change in chooseMaskMethod.
+function chooseMaskMethod_Callback(hObject, eventdata, handles)
+% hObject    handle to chooseMaskMethod (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns chooseMaskMethod contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from chooseMaskMethod
+
+showMaskMethod( handles );
 
 
 
@@ -617,10 +705,16 @@ function applyToMask_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-dDMasks = getDataMainGui( 'dropDownMasks' );
-sizeM = size(dDMasks);
+dDMasks         = getDataMainGui( 'dropDownMasks' );
+sizeM           = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
+    warndlg( 'Couldn''t find a mask to save. Create/Load mask first.', 'Attention' );
+    return;
+end
+
+currImgMask     = getappdata(handles.regionGrow, 'currImgMask' );
+if currImgMask == 0
+    warndlg( 'Couldn''t find a seeded mask to save. First choose seeds then apply a thresh to create the seeded mask.', 'Attention' );
     return;
 end
 
@@ -630,7 +724,7 @@ hMain           = getDataMainGui( 'handles' );
 img             = getappdata(handles.regionGrow, 'currImg' );
 
 % save mask according to current View
-currVal         = get(handles.chooseView,'Value'); 
+currVal         = get(handles.chooseView,'Value');
 if currVal == 1      % transversal
     currIndex               = get( hMain.sliderTra, 'Value' );
 	currMask(:,:,currIndex) = currMaskMethod;
@@ -659,9 +753,21 @@ else                 % coronal
         
 end
 
-imshowKeepZoom( img );
-
 setappdata(handles.regionGrow, 'currMask', currMask );
+
+% show the current img with the current default mask
+currDefaultMask = getCurrDefaultMask( handles );
+blue = cat(3, zeros(size(img)), zeros(size(img)), currDefaultMask);
+imshowKeepZoom( blue );
+hold on;
+alpha = 0.6;
+alpha_matrix = alpha*ones(size(img,1),size(img,2));
+h = imshowKeepZoom( img );
+set(h,'AlphaData',alpha_matrix);
+hold off;
+
+% XXX set it to -1 and if it is -1 you have to choose seeds first and do regiongrow again setappdata(handles.regionGrow, 'currImgMask', zeros(size(img)) );
+setappdata(handles.regionGrow, 'currImgMask', 0 );
 
 % update the masks struct
 masks    = getDataMainGui( 'masks' );
@@ -669,3 +775,111 @@ contents = cellstr(get(handles.chooseMask,'String'));
 name     = contents{get(handles.chooseMask,'Value')};
 masks.( name ) = currMask;
 setDataMainGui( 'masks', masks );
+
+
+% --- Executes when regionGrow is resized.
+function regionGrow_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to regionGrow (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% uipanel2 and testView have the property "units" set to "normalized"
+
+oldUnits        = get(hObject,'Units');
+set(hObject,'Units','pixels');
+figPos          = get(hObject,'Position');
+
+% set infoText
+set(handles.infoText,'Units','pixels');
+infoTextPos     = get(handles.infoText,'Position');
+% upos          = left, bottom, widht, height
+% new bottom    = heightFigure-hightInfo-7pxDefaultSpace(the space between infoText and upper border of the figure)
+% 7pxDefaultSpace = figPos(4) - infoTextPos(2) - infoTextPos(4)
+newBottom       = figPos(4) - infoTextPos(4) - 7;
+upos            = [infoTextPos(1), newBottom, infoTextPos(3), infoTextPos(4)];
+set(handles.infoText,'Position',upos);
+
+% set methodPanel
+set(handles.methodPanel,'Units','pixels');
+methodPanelPos      = get(handles.methodPanel,'Position');
+newBottom           = figPos(4) - methodPanelPos(4) - 49;
+oldUnitsUIPanel2    = get(handles.uipanel2,'Units');
+set(handles.uipanel2,'Units','pixels');
+UIPanel2Pos         = get(handles.uipanel2,'Position');
+%methodPanelPos(1)-(UIPanel2Pos(1)+UIPanel2Pos(3)) = 32 % space between
+%uipanel2 and methodPanel
+newLeft             = UIPanel2Pos(1) + UIPanel2Pos(3) + 32;
+%newLeft         = figPos(3) - methodPanelPos(3) - 21; % keep method Panel
+%on the right edge
+upos                = [newLeft, newBottom, methodPanelPos(3), methodPanelPos(4)];
+set(handles.methodPanel,'Position',upos);
+set(handles.uipanel2,'Units',oldUnitsUIPanel2);
+
+set(hObject,'Units',oldUnits);
+
+
+% --- Executes on button press in transToggle.
+function transToggle_Callback(hObject, eventdata, handles)
+% hObject    handle to transToggle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of transToggle
+
+val = get(hObject,'Value');
+
+if val
+    set( handles.transInput, 'enable', 'on' );
+else
+    set( handles.transInput, 'enable', 'off' );
+end
+
+setappdata(handles.regionGrow, 'isTransparent', val );
+showMaskMethod( handles );
+
+
+
+function transInput_Callback(hObject, eventdata, handles)
+% hObject    handle to transInput (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of transInput as text
+%        str2double(get(hObject,'String')) returns contents of transInput as a double
+
+val = str2double(get(hObject,'String'));
+setappdata(handles.regionGrow, 'alpha', val );
+showMaskMethod( handles );
+
+
+% --- Executes during object creation, after setting all properties.
+function transInput_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to transInput (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in up.
+function up_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, true );
+
+
+% --- Executes on button press in up.
+function down_Callback(hObject, eventdata, handles)
+% hObject    handle to up (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhUpDown = getDataMainGui( 'fhUpDown' );
+feval( fhUpDown, handles, false );
