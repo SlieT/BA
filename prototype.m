@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 06-Apr-2014 14:55:19
+% Last Modified by GUIDE v2.5 20-Apr-2014 15:43:18
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -60,6 +60,12 @@ handles.lastFolder = '';    % contains the last Folder path
 
 % save a reference to the main gui
 setappdata(0, 'hMainGui', hObject);
+
+% mask can be loaded without loaded images
+% XXX mask = label - since its technically a mask we use "mask" in the code
+% but to the user the word "label" is most familiar 
+setDataMainGui( 'masks', struct );
+setDataMainGui( 'dropDownMasks' , {} );
 
 % Update handles structure
 guidata(hObject, handles);
@@ -573,8 +579,6 @@ setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
 setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
 setDataMainGui( 'fhUpDown'      , @upDown        );
 setDataMainGui( 'handles'       , handles  );
-setDataMainGui( 'masks'         , struct  );
-setDataMainGui( 'dropDownMasks' , {}  );
 
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
@@ -843,14 +847,14 @@ function menuMaskCreate_Callback(hObject, eventdata, handles)
 images  = getDataMainGui( 'Images' );
 s       = size(images);
 if s(1) == 0
-    warndlg('Before you can create a mask you need to import images.', 'Warning');
+    warndlg('Before you can create a label you need to import images.', 'Warning');
     return;
 end
 
 % make sure
-w       = warndlg('Before you create a mask, DELETE all unnesecarry images FIRST because the mask is fixed at its size.', 'Warning');
+w       = warndlg('Before you create a label, DELETE all unnesecarry images FIRST because the label is fixed at its size.', 'Warning');
 waitfor(w);
-name    = inputdlg('Name of new Mask:', 'Create Mask');
+name    = inputdlg('Name of new label:', 'Create label');
 
 % if cancel
 if size(name, 1) == 0
@@ -862,7 +866,7 @@ name    = name{1};
 % if space
 k = strfind(name, ' ');
 if size(k, 1) >= 1 
-    warndlg( 'No space character('' '') in the maskname allowed.', 'Warning');
+    warndlg( 'No space character('' '') in the name of the label allowed.', 'Warning');
     return;
 end
 
@@ -873,7 +877,7 @@ sizeNames     = size(masksNames, 1);
 
 for i = 1:1:sizeNames
     if strcmp( masksNames{i}, name )
-        warndlg( 'Mask with this name already exists.', 'Attention' );
+        warndlg( 'Label with this name already exists.', 'Attention' );
         return;
     end
 end
@@ -930,23 +934,24 @@ end
 
 files         = dir( fullfile( currentFolder, '*.png' ));       % build struct of all png-Images/Masks in this folder   
 
-% dialog to name mask
-maskName      = inputdlg('Type in the name of the mask:', 'Load mask');
-
-if isempty(maskName)
-    return;
-end
+% get maskName
+maskName = files(1).name;
+maskName = strsplit(maskName, '_');
+maskName = maskName(1);
+maskName = maskName{1};
 
 % if name already exists
 masks         = getDataMainGui( 'masks' );
-masksNames    = fieldnames(masks);
-sizeNames     = size(masksNames, 1);
-maskName      = maskName{1};
 
-for i = 1:1:sizeNames
-    if strcmp( masksNames{i}, maskName )
-        warndlg( 'Mask with this name already exists.', 'Attention' );
-        return;
+if size(masks, 1) > 0
+    masksNames    = fieldnames(masks);
+    sizeNames     = size(masksNames, 1);
+
+    for i = 1:1:sizeNames
+        if strcmp( masksNames{i}, maskName )
+            warndlg( 'Label with this name already exists.', 'Attention' );
+            return;
+        end
     end
 end
 
@@ -956,7 +961,7 @@ M             = imread( fullfile( currentFolder, files(1).name ));   % read in f
 sizeM         = size( M );
 newMask       = false( sizeM( 1 ), sizeM( 2 ), numMask );
 
-h = waitbar(0,'Loading images into mask...');
+h = waitbar(0,'Loading label...');
 for i = 1:1:numMask
     fname          = fullfile( currentFolder, files(i).name );
     newMask(:,:,i) = imread( fname );
@@ -1009,12 +1014,12 @@ masks       = getDataMainGui( 'masks' );
 masksNames  = fieldnames(masks);
 
 % no images loaded yet
-if size( masks ) == 0
-    warndlg( 'No masks available.', 'Attention' );
+if size( masksNames, 1 ) == 0
+    warndlg( 'No label available.', 'Attention' );
     return;
 end
 
-[s,v]       = listdlg('PromptString','Select a file:',...
+[s,v]       = listdlg('PromptString','Select label:',...
                 'SelectionMode','single',...
                 'ListString',masksNames);
 
@@ -1040,7 +1045,7 @@ numOfDezimal        = floor( log10(sizeMask) ) + 1;
 numOfDezimalFormat  = strcat( '%0', num2str(numOfDezimal), 'd' );
 
 % save to disk
-h = waitbar(0,'Save mask...');
+h = waitbar(0,'Saving label...');
 for i = 1:1:sizeMask
         addOn = strcat( maskName, '_', num2str(i, numOfDezimalFormat), '.png' );
         fname = fullfile( dirName, addOn );
@@ -1049,7 +1054,105 @@ for i = 1:1:sizeMask
 end
 close( h );
 
-msgbox( 'Mask successfully stored.','Save success');
+msgbox( 'Label successfully stored.','Save success');
+
+
+% --------------------------------------------------------------------
+function menuMaskRename_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMaskRename (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+masks       = getDataMainGui( 'masks' );
+masksNames  = fieldnames(masks);
+
+% no images loaded yet
+if size( masksNames, 1 ) == 0
+    warndlg( 'No label available.', 'Attention' );
+    return;
+end
+
+dropDownMasks = getDataMainGui( 'dropDownMasks' );
+
+[s,v]       = listdlg('PromptString','Select label:',...
+                'SelectionMode','single',...
+                'ListString',dropDownMasks);
+
+% cancel?
+if v == 0
+    return;
+end
+
+currMaskName    = dropDownMasks{s};
+
+newMaskName     = inputdlg('Name of new label:', 'Create label');
+% if cancel
+if size(newMaskName, 1) == 0
+    return;
+end
+
+% check for duplicates
+sizeNames     = size(masksNames, 1);
+for i = 1:1:sizeNames
+	if strcmp( masksNames{i}, newMaskName )
+      	warndlg( 'Label with this name already exists.', 'Attention' );
+       	return;
+	end
+end
+
+newMaskName     = newMaskName{1};
+
+% if space
+k = strfind(newMaskName, ' ');
+if size(k, 1) >= 1 
+    warndlg( 'No space character('' '') in the name of the label allowed.', 'Warning');
+    return;
+end
+
+% rename through adding the new mask with the old value and removing
+% the old mask
+[masks.(newMaskName)] = masks.(currMaskName);
+masks = rmfield(masks,currMaskName);
+
+% update dropDownMasks
+sDDM            = size(dropDownMasks, 2);
+% on the correct position
+for i=1:1:sDDM
+    if strcmp(dropDownMasks{i}, currMaskName)
+        dropDownMasks{i} = newMaskName;
+    end
+end
+
+setDataMainGui( 'masks', masks );
+setDataMainGui( 'dropDownMasks', dropDownMasks );
+
+% append the name into the regiongrow drowdown if regiongrow fig is alive 
+if isempty(findobj('type','figure','name','regionGrow')) == 0
+    hregionGrow = getDataMainGui( 'hregionGrow' ); 
+    set( hregionGrow.chooseMask, 'string', dropDownMasks );
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hregionGrow.regionGrow, 'currMask', newMask );
+    end
+    
+% append the name into the manualSegmentation drowdown if manualSegmentation fig is alive 
+elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
+    hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' ); 
+    set( hmanualSegmentation.chooseMask, 'string', dropDownMasks ); 
+    
+    % if first mask 
+    if length(fieldnames(masks)) == 1
+        setappdata( hmanualSegmentation.manualSegmentation, 'currMask', newMask );
+        
+        fhUpdateCurrImgMask = getDataMainGui( 'fhUpdateCurrImgMask' );
+        hmanualSegmentation = getDataMainGui( 'hmanualSegmentation' );
+        axes( hmanualSegmentation.testView );
+        feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
+    end
+end
+
+
 
 
 % --- "upDown" function for the "+" or "-" button in external views

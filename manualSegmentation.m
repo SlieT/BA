@@ -87,6 +87,12 @@ end
 
 imshow( currTraImg );
 
+% show Mask
+if sizeM(1) > 0
+    isSet           = get(handles.showMask,'Value');
+    showMask( handles, isSet );
+end
+
 % set global data
 setDataMainGui( 'hmanualSegmentation', handles );
 setDataMainGui( 'fhUpdateTestView', @updateTestView );
@@ -228,7 +234,7 @@ name     = contents{get(hObject,'Value')};
 dDMasks  = getDataMainGui( 'dropDownMasks' );
 sizeM    = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
     return;
 end
 
@@ -325,7 +331,7 @@ function showMask_Callback(hObject, eventdata, handles)
 dDMasks  = getDataMainGui( 'dropDownMasks' );
 sizeM    = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
     return;
 end
 
@@ -369,14 +375,6 @@ hold off;
 
 % --- update the current (choosen) mask
 function updateCurrMask( handles )
-
-% set new currImgMask according to current view
-dDMasks = getDataMainGui( 'dropDownMasks' );
-sizeM = size(dDMasks);
-if sizeM(1) == 0
-    warndlg( 'Couldn''t found a mask to save. Create/Load mask first.', 'Attention' );
-    return;
-end
 
 currMask        = getappdata(handles.manualSegmentation, 'currMask' );
 currImgMask     = getappdata(handles.manualSegmentation, 'currImgMask' );
@@ -431,6 +429,14 @@ if isInUse == 1
     warndlg( 'End your current selection before you start a new one.', 'Attention' );
     return;
 end
+
+currImgMask = getappdata( handles.manualSegmentation, 'currImgMask' );
+% if no mask loaded yet
+if size( currImgMask, 1 ) == 1
+    warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
+    return;
+end
+
 setappdata(handles.manualSegmentation, 'getpts', 1);
 
 [X, Y] = getpts( handles.testView ); 
@@ -440,8 +446,6 @@ for i=1:1:size(X)
     X(i) = round(X(i));
     Y(i) = round(Y(i));
 end
-
-currImgMask     = getappdata( handles.manualSegmentation, 'currImgMask' );
 
 % invert current mask value
 for i=1:1:size(X)
@@ -454,9 +458,9 @@ setappdata( handles.manualSegmentation, 'currImgMask', currImgMask );
 updateCurrMask( handles );
 
 % redraw image and new mask
-img             = getappdata(handles.manualSegmentation, 'currImg' );
+img     = getappdata(handles.manualSegmentation, 'currImg' );
 imshowKeepZoom( img );
-isSet    = get(handles.showMask,'Value');
+isSet   = get(handles.showMask,'Value');
 showMask( handles, isSet );
 
 setappdata(handles.manualSegmentation, 'getpts', 0);
@@ -534,7 +538,13 @@ function selectRegion_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 roi         = getappdata(handles.manualSegmentation, 'roi' );
-currImgMask = getappdata(handles.manualSegmentation, 'currImgMask' );
+currImgMask = getappdata( handles.manualSegmentation, 'currImgMask' );
+
+% if no mask loaded yet
+if size( currImgMask, 1 ) == 1
+    warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
+    return;
+end
 
 if roi == 0
     setappdata(handles.manualSegmentation, 'roi', 1 ); % roi in use

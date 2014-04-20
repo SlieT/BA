@@ -501,7 +501,7 @@ name     = contents{get(hObject,'Value')};
 dDMasks  = getDataMainGui( 'dropDownMasks' );
 sizeM    = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t find a mask. Create/Load mask first.', 'Attention' );
+    warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
     return;
 end
 
@@ -708,13 +708,13 @@ function applyToMask_Callback(hObject, eventdata, handles)
 dDMasks         = getDataMainGui( 'dropDownMasks' );
 sizeM           = size(dDMasks);
 if sizeM(1) == 0
-    warndlg( 'Couldn''t find a mask to save. Create/Load mask first.', 'Attention' );
+    warndlg( 'Couldn''t find a label to save. Create/Load label first.', 'Attention' );
     return;
 end
 
 currImgMask     = getappdata(handles.regionGrow, 'currImgMask' );
 if currImgMask == 0
-    warndlg( 'Couldn''t find a seeded mask to save. First choose seeds then apply a thresh to create the seeded mask.', 'Attention' );
+    warndlg( 'Couldn''t find a seeded label to save. First choose seeds then apply a thresh to create the seeded label.', 'Attention' );
     return;
 end
 
