@@ -298,7 +298,6 @@ elseif currVal == 2  % sagittal
     manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
     nearestNeighbour    = makeresampler( 'cubic','fill' );
     currImgMask         = imtransform( currImgMask,manipulate,nearestNeighbour );
-    currImgMask         = flipdim(currImgMask,2);
     
 else                 % coronal
     currIndex           = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
@@ -309,7 +308,6 @@ else                 % coronal
     manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );     
     nearestNeighbour    = makeresampler( 'cubic','fill' );
     currImgMask         = imtransform( currImgMask,manipulate,nearestNeighbour );
-    currImgMask         = flipdim(currImgMask,2);
     
 end
 
@@ -392,10 +390,10 @@ elseif currVal == 2  % sagittal
         
     for i=1:1:sizeI
         for j=1:1:sizeJ
-            currMask(i,currIndex,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
+            currMask(i,currIndex,j) = currImgMask(sizeJ+1 - j, i);
         end
     end
-    
+
 else                 % coronal
     currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
     sizeI          = size(currImgMask, 2); % 256
@@ -403,7 +401,7 @@ else                 % coronal
         
     for i=1:1:sizeI
         for j=1:1:sizeJ
-            currMask(currIndex,i,j) = currImgMask(sizeJ+1 - j, sizeI+1 - i);
+            currMask(currIndex,i,j) = currImgMask(sizeJ+1 - j, i);
         end
     end
         

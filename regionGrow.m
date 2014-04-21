@@ -500,6 +500,7 @@ name     = contents{get(hObject,'Value')};
 
 dDMasks  = getDataMainGui( 'dropDownMasks' );
 sizeM    = size(dDMasks);
+
 if sizeM(1) == 0
     warndlg( 'Couldn''t find a label. Create/Load label first.', 'Attention' );
     return;
@@ -555,7 +556,6 @@ elseif currVal == 2  % sagittal
     manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
     nearestNeighbour    = makeresampler( 'cubic','fill' );
     currDefaultMask     = imtransform( currDefaultMask,manipulate,nearestNeighbour );
-    currDefaultMask     = flipdim(currDefaultMask,2);
     
 else                 % coronal
     currIndex           = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
@@ -566,7 +566,6 @@ else                 % coronal
     manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );     
     nearestNeighbour    = makeresampler( 'cubic','fill' );
     currDefaultMask     = imtransform( currDefaultMask,manipulate,nearestNeighbour );
-    currDefaultMask     = flipdim(currDefaultMask,2);
     
 end
 
@@ -736,7 +735,7 @@ elseif currVal == 2  % sagittal
         
     for i=1:1:sizeI
         for j=1:1:sizeJ
-            currMask(i,currIndex,j) = currMaskMethod(sizeJ+1 - j, sizeI+1 - i);
+            currMask(i,currIndex,j) = currMaskMethod(sizeJ+1 - j, i);
         end
     end
     
@@ -747,7 +746,7 @@ else                 % coronal
         
     for i=1:1:sizeI
         for j=1:1:sizeJ
-            currMask(currIndex,i,j) = currMaskMethod(sizeJ+1 - j, sizeI+1 - i);
+            currMask(currIndex,i,j) = currMaskMethod(sizeJ+1 - j, i);
         end
     end
         

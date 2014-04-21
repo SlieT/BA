@@ -447,7 +447,7 @@ if currMethod == 3
         
         for i=1:1:sizeI
             for j=1:1:sizeJ
-                images(i,currImgIndex,j) = currTestImgRoi(sizeJ+1 - j, sizeI+1 - i);
+                images(i,currImgIndex,j) = currTestImgRoi(sizeJ+1 - j, i);
             end
         end
 
@@ -459,7 +459,7 @@ if currMethod == 3
         
         for i=1:1:sizeI
             for j=1:1:sizeJ
-                images(currImgIndex,i,j) = currTestImgRoi(sizeJ+1 - j, sizeI+1 - i);
+                images(currImgIndex,i,j) = currTestImgRoi(sizeJ+1 - j, i);
             end
         end
     end
