@@ -125,7 +125,7 @@ data  = getappdata(hMain, name);
 function imshowKeepZoom( img )
 xZoom = xlim;
 yZoom = ylim;
-    
+
 imshow( img ); 
 
 % set current zoom state
@@ -198,6 +198,9 @@ function imgEnhanced = applyMethods( img, methodHistory, methodHistoryIndex )
         mName = mH{i}(1);
         
         if strcmp(mName, 'imadjust')
+            img = imadjust( img );
+            
+        elseif strcmp(mName, 'imadjust_coherent')
             u       = mH{i}(2); 
             o       = mH{i}(3);
             u = u{1}(1); o = o{1}(1);
@@ -277,9 +280,12 @@ mHIndex = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
 mHIndex = mHIndex + 1;
 
 if strcmp(method, 'imadjust')
+    mH{ mHIndex }   = { 'imadjust' };
+    testImg         = imadjust( testImg );
+elseif strcmp(method, 'imadjust_coherent')
     u               = double(min(testImg(:))) / double(65535);
     o               = double(max(testImg(:))) / double(65535);
-    mH{ mHIndex }   = { 'imadjust', u, o };
+    mH{ mHIndex }   = { 'imadjust_coherent', u, o };
     testImg         = imadjust( testImg, [ u o ], [ 0 1 ] );
     
 elseif strcmp(method, 'gamma')
@@ -353,7 +359,7 @@ function applyToImage_Callback(hObject, eventdata, handles)
 currFigure  = gcf();
 images      = getDataMainGui( 'Images' );
 currTestImg = getappdata( handles.enhanceContrast, 'currTestImg' );
-currCiew     = get(handles.chooseView,'Value'); 
+currCiew    = get(handles.chooseView,'Value'); 
 hMain       = getDataMainGui( 'handles' );
 
 % apply current image
@@ -388,7 +394,7 @@ end
 setDataMainGui( 'Images', images );
 
 % update hMain
-hMain        = getDataMainGui( 'handles' );
+hMain          = getDataMainGui( 'handles' );
 fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
 fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
 fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
@@ -494,9 +500,10 @@ elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.enhanceContrast, 'currCorImg', currImg );
 end
-setappdata(handles.enhanceContrast, 'currImg', currImg );
 
 if strcmp(currView,view)
+    setappdata(handles.enhanceContrast, 'currImg', currImg );
+    
     % due to the sync by the prototype we need to set axes
     axes( handles.testView );
 
@@ -548,8 +555,12 @@ currVal     = get(hObject,'Value');
 if currVal == 1      % Distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'imadjust' );
     set( handles.valuePanel , 'visible', 'off' );
-    set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones.' );
-elseif currVal == 2  % Weighted distribute intensities
+    set( handles.infoText   , 'string' , 'Distributes the intensities in the current image.' );
+elseif currVal == 2      % Distribute intensities (coherent)
+    setappdata(handles.enhanceContrast, 'currMethod', 'imadjust_coherent' );
+    set( handles.valuePanel , 'visible', 'off' );
+    set( handles.infoText   , 'string' , 'Distributes the intensities in this image, seen in the "Test view". The image is then used as a "scheme" for any other image to get a coherent result of contrast improvement, at the same intensity-level.' );
+elseif currVal == 3  % Weighted distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'gamma' );
     set( handles.valuePanel , 'visible', 'on' );
     set( handles.textVal1   , 'string' , 'Gamma');
@@ -557,7 +568,7 @@ elseif currVal == 2  % Weighted distribute intensities
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
     set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end.' );
-elseif currVal == 3  % Adaptive histogram equalization
+elseif currVal == 4  % Adaptive histogram equalization
     setappdata(handles.enhanceContrast, 'currMethod', 'adapthisteq' );
     set( handles.valuePanel , 'visible', 'on' );
     set( handles.textVal1   , 'string' , 'M');
@@ -569,11 +580,11 @@ elseif currVal == 3  % Adaptive histogram equalization
     set( handles.val2       , 'string' , '8');
 
     set( handles.infoText   , 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
-elseif currVal == 4  % Complement 
+elseif currVal == 5  % Complement 
     setappdata(handles.enhanceContrast, 'currMethod', 'imcomplement' );
     set( handles.valuePanel , 'visible', 'off' );
     set( handles.infoText   , 'string' , 'This method complements the current image.' );
-elseif currVal == 5  % Logarithmic transformation
+elseif currVal == 6  % Logarithmic transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'log' );
     set( handles.valuePanel , 'visible', 'on' );
     set( handles.textVal1   , 'string' , 'c');
@@ -581,7 +592,7 @@ elseif currVal == 5  % Logarithmic transformation
     set( handles.textVal2   , 'visible', 'off' );
     set( handles.val2       , 'visible', 'off' );
     set( handles.infoText   , 'string' , 'To enhance the contrast of bright pixels COMPLEMENT the image first, because applying the logarithmic transformation will expand values of dark pixels in an image while compressing the bright pixels. Method: c*(log(1 + image))' );
-elseif currVal == 6  % Contrast-stretching transformation
+elseif currVal == 7  % Contrast-stretching transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'stretch' );
     set( handles.valuePanel , 'visible', 'on' );
     set( handles.textVal1   , 'string' , 'E');

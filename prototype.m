@@ -22,7 +22,7 @@ function varargout = prototype(varargin)
 
 % Edit the above text to modify the response to help prototype
 
-% Last Modified by GUIDE v2.5 20-Apr-2014 15:43:18
+% Last Modified by GUIDE v2.5 20-Apr-2014 23:39:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -479,10 +479,6 @@ if strcmp( currentFolder, handles.lastFolder ) == false
 else
     return;
 end
-   
-
-% set sliders
-sliderStep = 1 / numImages;
 
 Isize           = size(Images);
 amountRows      = Isize(1);
@@ -491,6 +487,21 @@ firstImg        = round( numImages/2 );
 halfC           = amountColumns / 2;            % start in the middle otherwise sagittal and coronal would properbly show nothing
 halfR           = amountRows / 2;
 
+% enhance the contrast of all images?
+label           = get( hObject, 'Label' );
+if strcmp( label, 'Load')
+    enhanceImg  = Images(:,:,firstImg);
+    u           = double(min(enhanceImg(:))) / double(65535);
+    o           = double(max(enhanceImg(:))) / double(65535);
+    for i = 1:1:numImages
+        enhanceImg = Images(:,:,i); 
+        enhanceImg = imadjust( enhanceImg, [ u o ], [ 0 1 ] );
+        Images(:,:,i) = enhanceImg;
+    end
+end
+
+% set sliders
+sliderStep = 1 / numImages;
 
 set( handles.currImage, 'String'    , files(firstImg).name );
 set( handles.sliderTra, 'Min'       , 1 );
