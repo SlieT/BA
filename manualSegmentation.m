@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 18-Apr-2014 23:38:57
+% Last Modified by GUIDE v2.5 21-Apr-2014 20:23:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -551,7 +551,11 @@ if roi == 0
     roi = roipoly;
 
     if size(roi, 1) > 0 % cancel?
-        currImgMask(roi) = 1;
+        if strcmp( get(hObject,'string'), 'Select region (add)' )
+            currImgMask(roi) = 1;
+        elseif strcmp( get(hObject,'string'), 'Select region (remove)' )
+            currImgMask(roi) = 0;
+        end
     end
     
     setappdata(handles.manualSegmentation, 'currImgMask', currImgMask );

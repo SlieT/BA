@@ -1,35 +1,35 @@
-function varargout = prototype(varargin)
-% PROTOTYPE MATLAB code for prototype.fig
-%      PROTOTYPE, by itself, creates a new PROTOTYPE or raises the existing
+function varargout = main(varargin)
+% MAIN MATLAB code for main.fig
+%      MAIN, by itself, creates a new MAIN or raises the existing
 %      singleton*.
 %
-%      H = PROTOTYPE returns the handle to a new PROTOTYPE or the handle to
+%      H = MAIN returns the handle to a new MAIN or the handle to
 %      the existing singleton*.
 %
-%      PROTOTYPE('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in PROTOTYPE.M with the given input arguments.
+%      MAIN('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MAIN.M with the given input arguments.
 %
-%      PROTOTYPE('Property','Value',...) creates a new PROTOTYPE or raises the
+%      MAIN('Property','Value',...) creates a new MAIN or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before prototype_OpeningFcn gets called.  An
+%      applied to the GUI before main_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to prototype_OpeningFcn via varargin.
+%      stop.  All inputs are passed to main_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help prototype
+% Edit the above text to modify the response to help main
 
-% Last Modified by GUIDE v2.5 20-Apr-2014 23:39:39
+% Last Modified by GUIDE v2.5 21-Apr-2014 14:41:41
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @prototype_OpeningFcn, ...
-                   'gui_OutputFcn',  @prototype_OutputFcn, ...
+                   'gui_OpeningFcn', @main_OpeningFcn, ...
+                   'gui_OutputFcn',  @main_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,15 +44,15 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before prototype is made visible.
-function prototype_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before main is made visible.
+function main_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to prototype (see VARARGIN)
+% varargin   command line arguments to main (see VARARGIN)
 
-% Choose default command line output for prototype
+% Choose default command line output for main
 handles.output = hObject;
 
 % own variables
@@ -67,6 +67,8 @@ setappdata(0, 'hMainGui', hObject);
 setDataMainGui( 'masks', struct );
 setDataMainGui( 'dropDownMasks' , {} );
 
+setDataMainGui( 'eraseMasks', {} );
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -74,12 +76,12 @@ guidata(hObject, handles);
 clc; clear all; imtool close all;
 
 
-% UIWAIT makes prototype wait for user response (see UIRESUME)
-% uiwait(handles.prototype);
+% UIWAIT makes main wait for user response (see UIRESUME)
+% uiwait(handles.main);
 
 
 % --- Outputs from this function are returned to the command line.
-function varargout = prototype_OutputFcn(hObject, eventdata, handles) 
+function varargout = main_OutputFcn(hObject, eventdata, handles) 
 % varargout  cell array for returning output args (see VARARGOUT);
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -89,9 +91,9 @@ function varargout = prototype_OutputFcn(hObject, eventdata, handles)
 varargout{1} = handles.output;
 
 
-% --- Executes when user attempts to close prototype.
-function prototype_CloseRequestFcn(hObject, eventdata, handles)
-% hObject    handle to prototype (see GCBO)
+% --- Executes when user attempts to close main.
+function main_CloseRequestFcn(hObject, eventdata, handles)
+% hObject    handle to main (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
@@ -109,6 +111,9 @@ elseif isempty(findobj('type','figure','name','regionGrow')) == 0
     delete(hreg.output);
 elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
     hreg = getDataMainGui( 'hmanualSegmentation' );
+    delete(hreg.output);
+elseif isempty(findobj('type','figure','name','eraseOverlapping')) == 0
+    hreg = getDataMainGui( 'heraseOverlapping' );
     delete(hreg.output);
 end
 
@@ -210,8 +215,9 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
-                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
+            || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+            || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+            || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'tra', image );
     end
@@ -280,8 +286,9 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
-                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
+            || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+            || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+            || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'sag', image );
     end
@@ -348,8 +355,9 @@ if newVal ~= -1
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
-                || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
-                || isempty(findobj('type','figure','name','manualSegmentation')) == 0
+            || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+            || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+            || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
         fhUpdateTestView = getDataMainGui( 'fhUpdateTestView' );
         feval( fhUpdateTestView, 'cor', image );
     end
@@ -403,8 +411,8 @@ end
 function MenuFolder_Callback(hObject, eventdata, handles)
 
 
-% --- Executes when prototype is resized.
-function prototype_ResizeFcn(hObject, eventdata, handles)
+% --- Executes when main is resized.
+function main_ResizeFcn(hObject, eventdata, handles)
 
 
 function sagImgNew = getSagImg( value )
@@ -718,7 +726,8 @@ function segment_Callback(hObject, eventdata, handles)
 
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ... % == 0 means "no its not empty"
         || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
-        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -731,7 +740,8 @@ function enhanceContrast_Callback(hObject, eventdata, handles)
 
 if isempty(findobj('type','figure','name','segmentation')) == 0 ...
         || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
-        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -743,7 +753,8 @@ enhanceContrast;
 function regionGrow_Callback(hObject, eventdata, handles)
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
         || isempty(findobj('type','figure','name','segmentation')) == 0 ...
-        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','eraseOverlapping')) == 0
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
@@ -755,12 +766,30 @@ regionGrow;
 function manualSegmentation_Callback(hObject, eventdata, handles)
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
         || isempty(findobj('type','figure','name','segmentation')) == 0 ...
-        || isempty(findobj('type','figure','name','regionGrow')) == 0 
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+        || isempty(findobj('type','figure','name','eraseOverlapping')) == 0 
     warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
     return;
 end
 
 manualSegmentation;
+
+
+% --- Executes on button press in eraseOverlapping.
+function eraseOverlapping_Callback(hObject, eventdata, handles)
+% hObject    handle to eraseOverlapping (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
+        || isempty(findobj('type','figure','name','segmentation')) == 0 ...
+        || isempty(findobj('type','figure','name','regionGrow')) == 0 ...
+        || isempty(findobj('type','figure','name','manualSegmentation')) == 0
+    warndlg( 'Only one imagemanipulation at a time. Please close your extern window first.', 'Attention' );
+    return;
+end
+
+eraseOverlapping;
+
 
 % --- Executes during object creation, after setting all properties.
 function transversal_CreateFcn(hObject, eventdata, handles)
@@ -948,8 +977,15 @@ files         = dir( fullfile( currentFolder, '*.png' ));       % build struct o
 % get maskName
 maskName = files(1).name;
 maskName = strsplit(maskName, '_');
-maskName = maskName(1);
-maskName = maskName{1};
+sizeM = size(maskName, 2);
+% if _ is in the maskName then reconstruct maskName
+if sizeM > 2
+    % delete last (format)
+    maskName( sizeM ) = [];
+    maskName = strjoin( maskName, '_' );
+else
+    maskName = maskName{1};
+end
 
 % if name already exists
 masks         = getDataMainGui( 'masks' );
@@ -1131,11 +1167,23 @@ sDDM            = size(dropDownMasks, 2);
 for i=1:1:sDDM
     if strcmp(dropDownMasks{i}, currMaskName)
         dropDownMasks{i} = newMaskName;
+        break;
+    end
+end
+
+% update eraseMasks
+eraseMasks  = getDataMainGui( 'eraseMasks' );
+sizeE       = size( eraseMasks, 2 );
+for i=1:1:sizeE
+    if strcmp(eraseMasks{i}, currMaskName)
+        eraseMasks{i} = newMaskName;
+        break;
     end
 end
 
 setDataMainGui( 'masks', masks );
 setDataMainGui( 'dropDownMasks', dropDownMasks );
+setDataMainGui( 'eraseMasks', eraseMasks );
 
 % append the name into the regiongrow drowdown if regiongrow fig is alive 
 if isempty(findobj('type','figure','name','regionGrow')) == 0
@@ -1162,8 +1210,6 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
-
-
 
 
 % --- "upDown" function for the "+" or "-" button in external views
