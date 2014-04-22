@@ -139,12 +139,14 @@ function val1_Callback(hObject, eventdata, handles)
 
 % suppress callback on focusout(/mouse leave + click) if method contains two or more input
 % variables
-methodNumber = get( handles.chooseMethod, 'Value' );
 
-% 3 = Adaptive histogram equalization, 6 = Contrast-stretching transformation
-if methodNumber ~= 3 && methodNumber ~= 6
-    applyToView( handles, 1 );
-end
+% this is how you would apply a method on focuslose or on submit(enter)
+% methodNumber = get( handles.chooseMethod, 'Value' );
+% 
+% % 3 = Adaptive histogram equalization, 6 = Contrast-stretching transformation
+% if methodNumber ~= 4 && methodNumber ~= 6
+%     applyToView( handles, 1 );
+% end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -167,14 +169,7 @@ function val2_Callback(hObject, eventdata, handles)
 
 % suppress callback on focusout(/mouse leave + click) if method contains two or more input
 % variables
-methodNumber = get( handles.chooseMethod, 'Value' );
 
-% 3 = Adaptive histogram equalization, 6 = Contrast-stretching transformation
-if methodNumber ~= 3 && methodNumber ~= 6
-    applyToView( handles, 1 );
-end
-
-    
 
 % --- Executes during object creation, after setting all properties.
 function val2_CreateFcn(hObject, eventdata, handles)
