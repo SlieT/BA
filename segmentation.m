@@ -133,14 +133,15 @@ data  = getappdata(hMain, name);
 
 % --- keep the current zoom state
 function imshowKeepZoom( img )
-xZoom = xlim;
-yZoom = ylim;
-    
-imshow( img ); 
+handles = getDataMainGui( 'hsegmentation' );
+xZoom   = xlim(handles.testView);
+yZoom   = ylim(handles.testView);
+
+imshow( img, 'parent', handles.testView ); 
 
 % set current zoom state
-xlim(xZoom);
-ylim(yZoom);
+set(handles.testView, 'xlim', xZoom);
+set(handles.testView, 'ylim', yZoom);
 
 
 function val1_Callback(hObject, eventdata, handles)
@@ -286,11 +287,11 @@ function drawTrimToRect( handles )
     % rectangle( x, y, width, height )
     currView = get( handles.chooseView, 'Value' );
     if currView == 1       % transversal
-        rectangle( 'Position', [ p1x  p1y p2x-p1x  p2y-p1y ], 'EdgeColor', 'r' );
+        rectangle( 'Position', [ p1x  p1y p2x-p1x  p2y-p1y ], 'EdgeColor', 'r', 'parent', handles.testView );
     elseif currView == 2  % sagittal
-        rectangle( 'Position', [ p1y 1 p2y-p1y  numImages ], 'EdgeColor', 'r' );
+        rectangle( 'Position', [ p1y 1 p2y-p1y  numImages ], 'EdgeColor', 'r', 'parent', handles.testView );
     else                  % coronal
-        rectangle( 'Position', [ p1x 1 p2x-p1x  numImages ], 'EdgeColor', 'r' );
+        rectangle( 'Position', [ p1x 1 p2x-p1x  numImages ], 'EdgeColor', 'r', 'parent', handles.testView );
     end
         
     
@@ -616,23 +617,12 @@ end
 setappdata(handles.segmentation, 'currImg', currImg );
 
 if strcmp(currView,view)
-    % due to the sync by the prototype we need to set axes
-    axes( handles.testView );
-
-    % save current zoom state
-    xZoom = xlim;
-    yZoom = ylim;
-
     applyToView( handles, 0 );
     
-    % current method trimToRect? draw rect
+     % current method trimToRect? draw rect
     if get( handles.chooseMethod, 'Value' ) == 1
         drawTrimToRect( handles );
     end
-    
-    % undo current zoom state
-    xlim(xZoom);
-    ylim(yZoom);
 end
 
 

@@ -119,15 +119,16 @@ data  = getappdata(hMain, name);
     
 
 % --- keep the current zoom state
-function h = imshowKeepZoom( img )
-xZoom = xlim;
-yZoom = ylim;
-    
-h     = imshow( img ); 
+function imshowKeepZoom( img )
+handles = getDataMainGui( 'heraseOverlapping' );
+xZoom   = xlim(handles.testView);
+yZoom   = ylim(handles.testView);
+
+imshow( img, 'parent', handles.testView ); 
 
 % set current zoom state
-xlim(xZoom);
-ylim(yZoom);
+set(handles.testView, 'xlim', xZoom);
+set(handles.testView, 'ylim', yZoom);
 
 
 % --- Executes on selection change in chooseView.
@@ -183,8 +184,6 @@ end
 setappdata(handles.eraseOverlapping, 'currImg', currImg );
 
 if strcmp(currView,view)
-    % due to the sync by the prototype we need to set axes
-    axes( handles.testView );
 
     imshowKeepZoom( currImg );
 end

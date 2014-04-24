@@ -89,7 +89,6 @@ end
 
 imshow( currTraImg );
 
-
 % set global data
 setDataMainGui( 'hregionGrow', handles );
 setDataMainGui( 'fhUpdateTestView', @updateTestView );
@@ -106,6 +105,7 @@ end
 
 % clear the command line
 clc;
+
 
 % UIWAIT makes regionGrow wait for user response (see UIRESUME)
 % uiwait(handles.regionGrow);
@@ -147,14 +147,15 @@ data  = getappdata(hMain, name);
 
 % --- keep the current zoom state
 function h = imshowKeepZoom( img )
-xZoom = xlim;
-yZoom = ylim;
-    
-h     = imshow( img ); 
+handles = getDataMainGui( 'hregionGrow' );
+xZoom   = xlim(handles.testView);
+yZoom   = ylim(handles.testView);
+
+h       = imshow( img, 'parent', handles.testView ); 
 
 % set current zoom state
-xlim(xZoom);
-ylim(yZoom);
+set(handles.testView, 'xlim', xZoom);
+set(handles.testView, 'ylim', yZoom);
 
 
 % --- choose your seeds
@@ -266,9 +267,6 @@ function applyToView( handles, applyMethod )
 
 % image or view change
 if applyMethod == 0
-    % get current image
-    currImg = getappdata(handles.regionGrow, 'currImg' );
-    imshowKeepZoom( currImg );
     
     showMaskMethod( handles );
     return;
@@ -368,18 +366,7 @@ end
 setappdata(handles.regionGrow, 'currImg', currImg );
 
 if strcmp(currView,view)
-    % due to the sync by the prototype we need to set axes
-    axes( handles.testView );
-
-    % save current zoom state
-    xZoom = xlim;
-    yZoom = ylim;
-
     applyToView( handles, 0 );
-    
-    % undo current zoom state
-    xlim(xZoom);
-    ylim(yZoom);
 end
 
 
@@ -572,10 +559,18 @@ end
 
 % --- show the current mask method
 function showMaskMethod( handles )
+% set axes otherwise it cant draw the transparent image over the mask (Situation:
+% main figure and regiongrow figure open, sliderTra used to update next image. 
+% See h = imshowKeepZoom, the h returned would be from the main axis and it
+% couldn't draw the mask since the mask is in this (regionGrow) figure - set(h,'AlphaData',alpha_matrix);)
+axes(handles.testView);
 
 dDMasks = getDataMainGui( 'dropDownMasks' );
 sizeM = size(dDMasks);
 if sizeM(1) == 0
+    % update on "new image" (slider up/down or +/-) if no mask exist
+    img         = getappdata(handles.regionGrow, 'currImg' );
+    imshowKeepZoom(img);
     return;
 end
 
@@ -588,7 +583,7 @@ if currImgMask == 0
 end
 
 currDefaultMask = getCurrDefaultMask( handles );
-isTrans = getappdata(handles.regionGrow, 'isTransparent');
+isTrans         = getappdata(handles.regionGrow, 'isTransparent');
 
 % what method?
 if currMethod == 1      % New/Renew Mask
@@ -605,6 +600,7 @@ if currMethod == 1      % New/Renew Mask
         blue(currDefaultMask    ==1) = 65535;
         colorMask                    = cat(3, img, green, blue);
     end
+    
     imshowKeepZoom( colorMask );
 
 elseif currMethod == 2  % New/Renew Mask (show seeded mask)
@@ -663,6 +659,9 @@ end
 setappdata(handles.regionGrow, 'currImgMaskMethod', currImgMask );
 
 if isTrans
+     
+    
+    
     hold on;
     alpha = getappdata(handles.regionGrow, 'alpha' );
     alpha_matrix = alpha*ones(size(img,1),size(img,2));
@@ -765,7 +764,6 @@ h = imshowKeepZoom( img );
 set(h,'AlphaData',alpha_matrix);
 hold off;
 
-% XXX set it to -1 and if it is -1 you have to choose seeds first and do regiongrow again setappdata(handles.regionGrow, 'currImgMask', zeros(size(img)) );
 setappdata(handles.regionGrow, 'currImgMask', 0 );
 
 % update the masks struct

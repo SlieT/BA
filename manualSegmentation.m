@@ -87,6 +87,9 @@ end
 
 imshow( currTraImg );
 
+% needs to be set before the first imshowKeepZoom-call
+setDataMainGui( 'hmanualSegmentation', handles );
+
 % show Mask
 if sizeM(1) > 0
     isSet           = get(handles.showMask,'Value');
@@ -94,7 +97,6 @@ if sizeM(1) > 0
 end
 
 % set global data
-setDataMainGui( 'hmanualSegmentation', handles );
 setDataMainGui( 'fhUpdateTestView', @updateTestView );
 setDataMainGui( 'fhUpdateCurrImgMask', @updateCurrImgMask );
 
@@ -144,14 +146,15 @@ data  = getappdata(hMain, name);
 
 % --- keep the current zoom state
 function h = imshowKeepZoom( img )
-xZoom = xlim;
-yZoom = ylim;
-    
-h     = imshow( img ); 
+handles = getDataMainGui( 'hmanualSegmentation' );
+xZoom   = xlim(handles.testView);
+yZoom   = ylim(handles.testView);
+
+h       = imshow( img, 'parent', handles.testView ); 
 
 % set current zoom state
-xlim(xZoom);
-ylim(yZoom);
+set(handles.testView, 'xlim', xZoom);
+set(handles.testView, 'ylim', yZoom);
 
 
 % --- Executes on selection change in chooseView.
@@ -209,9 +212,6 @@ end
 setappdata(handles.manualSegmentation, 'currImg', currImg );
 
 if strcmp(currView,view)
-    % due to the sync by the prototype we need to set axes
-    axes( handles.testView );
-
     imshowKeepZoom( currImg );
     
     updateCurrImgMask( handles, 1 );
@@ -339,6 +339,8 @@ showMask( handles, isSet );
 
 % --- show Mask
 function showMask( handles, isSet )
+% set axes otherwise it cant draw the transparent image over the mask
+axes(handles.testView);
 
 img         = getappdata(handles.manualSegmentation, 'currImg' );
 
@@ -360,9 +362,11 @@ elseif strcmp( maskColor, 'green' )
     mask = cat(3, zeros(size(img)), currImgMask, zeros(size(img)) );
     
 end    
+
 imshowKeepZoom( mask );
 
 transparency = getappdata(handles.manualSegmentation, 'transparency' );
+
 hold on;
 alpha = transparency;
 alpha_matrix = alpha*ones(size(img,1),size(img,2));

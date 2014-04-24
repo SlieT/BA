@@ -123,14 +123,15 @@ data  = getappdata(hMain, name);
 
 % --- keep the current zoom state
 function imshowKeepZoom( img )
-xZoom = xlim;
-yZoom = ylim;
+handles = getDataMainGui( 'henhanceContrast' );
+xZoom   = xlim(handles.testView);
+yZoom   = ylim(handles.testView);
 
-imshow( img ); 
+imshow( img, 'parent', handles.testView ); 
 
 % set current zoom state
-xlim(xZoom);
-ylim(yZoom);
+set(handles.testView, 'xlim', xZoom);
+set(handles.testView, 'ylim', yZoom);
 
 
 function val1_Callback(hObject, eventdata, handles)
@@ -495,22 +496,10 @@ elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.enhanceContrast, 'currCorImg', currImg );
 end
+setappdata(handles.enhanceContrast, 'currImg', currImg );
 
-if strcmp(currView,view)
-    setappdata(handles.enhanceContrast, 'currImg', currImg );
-    
-    % due to the sync by the prototype we need to set axes
-    axes( handles.testView );
-
-    % save current zoom state
-    xZoom = xlim;
-    yZoom = ylim;
-
+if strcmp(currView,view)  
     applyToView( handles, 0 );
-
-    % undo current zoom state
-    xlim(xZoom);
-    ylim(yZoom);
 end
 
 
@@ -531,7 +520,6 @@ else
     warndlg( 'No used method which could be undone.', 'Attention' );
     return;
 end
-
 
 applyToView( handles, 0 );
 

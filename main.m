@@ -166,8 +166,7 @@ set( handles.corSlide, 'string', sCorSlide );
 
 function updateTraLines( handles )
 
-axes( handles.transversal );
-handleTraImg = imshow( getDataMainGui( 'currTraImg' ) );
+handleTraImg = imshow( getDataMainGui( 'currTraImg' ), 'parent', handles.transversal );
 
 if getDataMainGui( 'showLines' )
     lineWidth       = getDataMainGui( 'lineWidth' );
@@ -180,10 +179,10 @@ if getDataMainGui( 'showLines' )
     hold on;
     
     % draw sag line
-    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.transversal );
     
     % draw cor line
-    line([0, endpointXCor], [startpointYCor, startpointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([0, endpointXCor], [startpointYCor, startpointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.transversal );
     hold off;
     % END draw 
     
@@ -242,8 +241,7 @@ updateCorImg( -1, handles );
 
 function updateSagLines( handles )
 
-axes( handles.sagittal );
-handleSagImg = imshow( getDataMainGui( 'currSagImg' ) );
+handleSagImg = imshow( getDataMainGui( 'currSagImg' ), 'parent', handles.sagittal );
 
 if getDataMainGui( 'showLines' )
     lineWidth       = getDataMainGui( 'lineWidth' );
@@ -255,10 +253,10 @@ if getDataMainGui( 'showLines' )
     % draw the transversal and coronal line
     hold on;
     % draw tra line
-    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.sagittal );
     
     % draw cor line
-    line([startPointXCor, startPointXCor], [0, endPointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([startPointXCor, startPointXCor], [0, endPointYCor], 'Color', 'b', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.sagittal );
     hold off;
     % END draw
     
@@ -312,8 +310,8 @@ updateCorImg( -1, handles );
 
 
 function updateCorLines( handles )
-axes( handles.coronal );
-handleCorImg = imshow( getDataMainGui( 'currCorImg' ) );
+
+handleCorImg = imshow( getDataMainGui( 'currCorImg' ), 'parent', handles.coronal );
 
 if getDataMainGui( 'showLines' )
     lineWidth       = getDataMainGui( 'lineWidth' );
@@ -325,10 +323,10 @@ if getDataMainGui( 'showLines' )
     % draw the transversal and sagittal line
     hold on;
     % draw tra line
-    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
     
     % draw sag line
-    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off');
+    line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
     hold off;
     % END draw
     
@@ -534,8 +532,7 @@ scale           = 1;                % scale factor
 lineWidth       = 1;
 % transversal
 traImg          = Images(:,:,firstImg);
-axes(handles.transversal);
-imshow( traImg );    
+imshow( traImg, 'parent', handles.transversal );    
 
 
 traSize         = size( traImg );
@@ -560,8 +557,7 @@ setDataMainGui( 'currTraImg'    , traImg         );
 
 % sagittal
 sagImgNew       = getSagImg( halfC );
-axes(handles.sagittal);
-imshow( sagImgNew ); 
+imshow( sagImgNew, 'parent', handles.sagittal ); 
 sagSize         = size( sagImgNew );
 sagRows         = sagSize(1);
 sagColumns      = sagSize(2);
@@ -572,8 +568,7 @@ setDataMainGui( 'currSagImg'    , sagImgNew      );
 
 % coronal
 corImgNew = getCorImg( halfR );
-axes( handles.coronal );
-imshow( corImgNew );
+imshow( corImgNew, 'parent', handles.coronal );
 corSize         = size( corImgNew );
 corRows         = corSize(1);
 corColumns      = corSize(2);
@@ -1260,5 +1255,3 @@ elseif currView == 3
     fhUpdateCorImg  = getDataMainGui( 'fhUpdateCorImg' );
     feval( fhUpdateCorImg, val, handlesMain );
 end
-
-axes( handles.testView );
