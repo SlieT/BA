@@ -22,7 +22,7 @@ function varargout = main(varargin)
 
 % Edit the above text to modify the response to help main
 
-% Last Modified by GUIDE v2.5 21-Apr-2014 14:41:41
+% Last Modified by GUIDE v2.5 02-May-2014 20:50:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before main is made visible.
@@ -74,6 +75,7 @@ guidata(hObject, handles);
 
 % Start with clean state
 clc; clear all; imtool close all;
+end
 
 
 % UIWAIT makes main wait for user response (see UIRESUME)
@@ -89,6 +91,7 @@ function varargout = main_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes when user attempts to close main.
@@ -119,18 +122,21 @@ end
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
+end
 
 
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
 setappdata(hMain, name, value);
+end
 
 
 % --- getData globallike
 function data = getDataMainGui( name )
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
+end
 
 
 % --- showData globallike (for debugging)
@@ -138,6 +144,7 @@ function showDatahMainGui()
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain);
 disp(data);
+end
 
 
 % --- update the tra slide info
@@ -146,6 +153,7 @@ val         = num2str( get( handles.sliderTra, 'Value' ));
 max         = num2str( get( handles.sliderTra, 'Max' ));
 sTraSlide   = strcat( 3, val, '/', max );
 set( handles.traSlide, 'string', sTraSlide );
+end
 
 
 % --- update the sag slide info
@@ -154,6 +162,7 @@ val         = num2str( get( handles.sliderSag, 'Value' ));
 max         = num2str( get( handles.sliderSag, 'Max' ));
 sSagSlide   = strcat( 3, val, '/', max );
 set( handles.sagSlide, 'string', sSagSlide );
+end
 
 
 % --- update the cor slide info
@@ -162,6 +171,7 @@ val         = num2str( get( handles.sliderCor, 'Value' ));
 max         = num2str( get( handles.sliderCor, 'Max' ));
 sCorSlide   = strcat( 3, val, '/', max );
 set( handles.corSlide, 'string', sCorSlide );
+end
 
 
 function updateTraLines( handles )
@@ -188,6 +198,7 @@ if getDataMainGui( 'showLines' )
     
     % only if the lines are shown enable the 'jump-to-clickPosition'
     set( handleTraImg, 'ButtonDownFcn', { @transversal_ButtonDownFcn, handles } ); 
+end
 end
 
 
@@ -224,6 +235,7 @@ end
 
 updateTraLines( handles );
 updateTraSlide( handles );
+end
 
 
 % --- Executes on slider movement.
@@ -237,6 +249,7 @@ set( handles.sliderTra, 'Value', newVal );
 updateTraImg( newVal, handles );
 updateSagImg( -1, handles );
 updateCorImg( -1, handles );
+end
 
 
 function updateSagLines( handles )
@@ -261,6 +274,7 @@ if getDataMainGui( 'showLines' )
     % END draw
     
     set( handleSagImg, 'ButtonDownFcn', { @sagittal_ButtonDownFcn, handles } );
+end
 end
 
 
@@ -295,6 +309,7 @@ end
 
 updateSagLines( handles );
 updateSagSlide( handles );
+end
 
 
 % --- Executes on slider movement.
@@ -307,6 +322,7 @@ set( handles.sliderSag, 'Value', newVal );
 updateSagImg( newVal, handles );
 updateTraImg( -1, handles );
 updateCorImg( -1, handles );
+end
 
 
 function updateCorLines( handles )
@@ -331,6 +347,7 @@ if getDataMainGui( 'showLines' )
     % END draw
     
     set( handleCorImg, 'ButtonDownFcn', { @coronal_ButtonDownFcn, handles } );
+end
 end
 
 
@@ -364,6 +381,7 @@ end
 
 updateCorLines( handles );
 updateCorSlide( handles );
+end
 
 
 % --- Executes on slider movement.
@@ -376,6 +394,7 @@ set( handles.sliderCor, 'Value', newVal );
 updateCorImg( newVal, handles );
 updateTraImg( -1, handles );
 updateSagImg( -1, handles );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -384,6 +403,7 @@ function sliderTra_CreateFcn(hObject, eventdata, handles)
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
 end
 
 
@@ -394,6 +414,7 @@ function sliderSag_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -403,14 +424,17 @@ function sliderCor_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+end
 
 
 % --------------------------------------------------------------------
-function MenuFolder_Callback(hObject, eventdata, handles)
+function menuFolder_Callback(hObject, eventdata, handles)
+end
 
 
 % --- Executes when main is resized.
 function main_ResizeFcn(hObject, eventdata, handles)
+end
 
 
 function sagImgNew = getSagImg( value )
@@ -426,6 +450,7 @@ sagImgReshape       = reshape( sagImg, [ sagImgSize(1), amountImages ]);   % ori
 manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
 nearestNeighbour    = makeresampler( 'cubic','fill' );     
 sagImgNew           = imtransform( sagImgReshape,manipulate,nearestNeighbour );
+end
 
 
 function corImgNew = getCorImg( value )
@@ -441,6 +466,7 @@ corImgReshape       = reshape( corImg, [ corImgSize(2), amountImages ]);       %
 manipulate          = maketform( 'affine',[ 0 getDataMainGui( 'flip' )*getDataMainGui( 'scale' ); 1 0; 0 0 ] );        
 nearestNeighbour    = makeresampler( 'cubic','fill' );     
 corImgNew           = imtransform( corImgReshape,manipulate,nearestNeighbour );
+end
 
 
 % --------------------------------------------------------------------
@@ -471,6 +497,7 @@ classI    = class( I );
 sizeI     = size( I );
 numImages = length( files );
 Images    = zeros( sizeI( 1 ), sizeI( 2 ), numImages, classI );
+maxNumber = intmax( classI );
 
 
 % read all images if folderpath changed
@@ -497,8 +524,8 @@ halfR           = amountRows / 2;
 label           = get( hObject, 'Label' );
 if strcmp( label, 'Load')
     enhanceImg  = Images(:,:,firstImg);
-    u           = double(min(enhanceImg(:))) / double(65535);
-    o           = double(max(enhanceImg(:))) / double(65535);
+    u           = double(min(enhanceImg(:))) / double(maxNumber);
+    o           = double(max(enhanceImg(:))) / double(maxNumber);
     for i = 1:1:numImages
         enhanceImg = Images(:,:,i); 
         enhanceImg = imadjust( enhanceImg, [ u o ], [ 0 1 ] );
@@ -508,6 +535,10 @@ end
 
 % set sliders
 sliderStep = 1 / numImages;
+
+set( handles.sliderTra, 'visible'   , 'on' );
+set( handles.sliderSag, 'visible'   , 'on' );
+set( handles.sliderCor, 'visible'   , 'on' );
 
 set( handles.currImage, 'String'    , files(firstImg).name );
 set( handles.sliderTra, 'Min'       , 1 );
@@ -540,20 +571,31 @@ traRows         = traSize(1);
 traColumns      = traSize(2);
 
 
-setDataMainGui( 'lastFolder'    , currentFolder  );
-setDataMainGui( 'defaultImages' , Images         );
-setDataMainGui( 'Images'        , Images         );
+setDataMainGui( 'lastFolder'    , currentFolder  ); 
+setDataMainGui( 'Images'        , Images         ); % all images
+setDataMainGui( 'maxNumber'     , maxNumber      ); % greatest possible number as pixelvalue for the current image(class)
 
-setDataMainGui( 'Isize'         , Isize          );
-setDataMainGui( 'files'         , files          );
-setDataMainGui( 'flip'          , flip           );
-setDataMainGui( 'scale'         , scale          );
-setDataMainGui( 'lineWidth'     , lineWidth      );
+log                     = {};
+logAll{ 1 }             = [];
+logTra{ numImages }     = [];
+logSag{ amountColumns } = [];
+logCor{ amountRows }    = [];
+setDataMainGui( 'log'           , log           );
+setDataMainGui( 'logAll'        , logAll        );
+setDataMainGui( 'logTra'        , logTra        );
+setDataMainGui( 'logSag'        , logSag    	);
+setDataMainGui( 'logCor'        , logCor    	);
 
-setDataMainGui( 'traSize'       , traSize        );
-setDataMainGui( 'traRows'       , traRows        );
-setDataMainGui( 'traColumns'    , traColumns     );
-setDataMainGui( 'currTraImg'    , traImg         );
+setDataMainGui( 'Isize'         , Isize         );
+setDataMainGui( 'files'         , files         );
+setDataMainGui( 'flip'          , flip          );
+setDataMainGui( 'scale'         , scale         );
+setDataMainGui( 'lineWidth'     , lineWidth     );
+
+setDataMainGui( 'traSize'       , traSize       );
+setDataMainGui( 'traRows'       , traRows       );
+setDataMainGui( 'traColumns'    , traColumns    );
+setDataMainGui( 'currTraImg'    , traImg        );
 
 % sagittal
 sagImgNew       = getSagImg( halfC );
@@ -561,10 +603,10 @@ imshow( sagImgNew, 'parent', handles.sagittal );
 sagSize         = size( sagImgNew );
 sagRows         = sagSize(1);
 sagColumns      = sagSize(2);
-setDataMainGui( 'sagSize'       , sagSize        );
-setDataMainGui( 'sagRows'       , sagRows        );
-setDataMainGui( 'sagColumns'    , sagColumns     );
-setDataMainGui( 'currSagImg'    , sagImgNew      );
+setDataMainGui( 'sagSize'       , sagSize       );
+setDataMainGui( 'sagRows'       , sagRows       );
+setDataMainGui( 'sagColumns'    , sagColumns    );
+setDataMainGui( 'currSagImg'    , sagImgNew     );
 
 % coronal
 corImgNew = getCorImg( halfR );
@@ -572,27 +614,28 @@ imshow( corImgNew, 'parent', handles.coronal );
 corSize         = size( corImgNew );
 corRows         = corSize(1);
 corColumns      = corSize(2);
-setDataMainGui( 'corSize'       , corSize        );
-setDataMainGui( 'corRows'       , corRows        );
-setDataMainGui( 'corColumns'    , corColumns     );
-setDataMainGui( 'currCorImg'    , corImgNew      );
+setDataMainGui( 'corSize'       , corSize       );
+setDataMainGui( 'corRows'       , corRows       );
+setDataMainGui( 'corColumns'    , corColumns    );
+setDataMainGui( 'currCorImg'    , corImgNew     );
 
 ratioTransSag   = sagRows / numImages;
 ratioTransCor   = corRows / numImages; 
 ratioSagCor     = corColumns / sagColumns;
 ratioCorSag     = sagColumns / corColumns;
-setDataMainGui( 'ratioTransSag' , ratioTransSag  );
-setDataMainGui( 'ratioTransCor' , ratioTransCor  );
-setDataMainGui( 'ratioSagCor'   , ratioSagCor    );
-setDataMainGui( 'ratioCorSag'   , ratioCorSag    );
+setDataMainGui( 'ratioTransSag' , ratioTransSag );
+setDataMainGui( 'ratioTransCor' , ratioTransCor );
+setDataMainGui( 'ratioSagCor'   , ratioSagCor   );
+setDataMainGui( 'ratioCorSag'   , ratioCorSag   );
 
-setDataMainGui( 'fhUpdateTraImg', @updateTraImg  );
-setDataMainGui( 'fhUpdateSagImg', @updateSagImg  );
-setDataMainGui( 'fhUpdateCorImg', @updateCorImg  );
-setDataMainGui( 'fhGetSagImg'   , @getSagImg     );
-setDataMainGui( 'fhGetCorImg'   , @getCorImg     );
-setDataMainGui( 'fhUpDown'      , @upDown        );
-setDataMainGui( 'handles'       , handles  );
+setDataMainGui( 'fhUpdateTraImg', @updateTraImg );
+setDataMainGui( 'fhUpdateSagImg', @updateSagImg );
+setDataMainGui( 'fhUpdateCorImg', @updateCorImg );
+setDataMainGui( 'fhGetSagImg'   , @getSagImg    );
+setDataMainGui( 'fhGetCorImg'   , @getCorImg    );
+setDataMainGui( 'fhUpDown'      , @upDown       );
+setDataMainGui( 'fhUpdateLog'   , @updateLog    );
+setDataMainGui( 'handles'       , handles       );
 
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
@@ -608,6 +651,7 @@ set( handles.corSlide       , 'Visible', 'on' );
 updateTraSlide( handles );
 updateSagSlide( handles );
 updateCorSlide( handles );
+end
 
 
 % --------------------------------------------------------------------
@@ -636,12 +680,29 @@ files       = getDataMainGui( 'files' );
 numImages   = length( files );
 images      = getDataMainGui( 'Images' );
 lastFolder  = getDataMainGui( 'lastFolder' );
+h           = waitbar(0,'Saving images...');
 
-for i = numImages:-1:1
+for i = 1:1:numImages
         fname         = fullfile( dirName, files(i).name );
         lastFName     = fullfile( lastFolder, files(i).name );
         metadata      = dicominfo( lastFName );
-        dicomwrite( images(:,:,i), fname, metadata );   
+        dicomwrite( images(:,:,i), fname, metadata );
+        waitbar(i / numImages);
+end
+
+close( h );
+
+% save Log?
+ButtonName = questdlg( 'Also save a logfile?', ...
+                 	'Save Log', ...
+                    'Yes', 'No', 'Yes' );
+switch ButtonName,
+    case 'Yes',
+        saveLog();
+    case 'No',
+    
+end         
+                
 end
 
 
@@ -653,6 +714,7 @@ elseif val > Max
     newVal = Max;
 else
     newVal = val;
+end
 end
 
 
@@ -671,6 +733,7 @@ set( handles.sliderCor, 'Value', get( handles.sliderCor, 'Max' )+1 - newCorVal )
 updateTraImg( -1, handles );
 updateSagImg( newSagVal, handles );
 updateCorImg( get( handles.sliderCor, 'Max' )+1 - newCorVal, handles );
+end
 
 
 % --- Executes on mouse press over axes background.
@@ -688,6 +751,7 @@ set( handles.sliderCor, 'Value', get( handles.sliderCor, 'Max' )+1 - newCorVal )
 updateSagImg( -1, handles );
 updateTraImg( get( handles.sliderTra, 'Max' )+1 - newTraVal, handles );
 updateCorImg( get( handles.sliderCor, 'Max' )+1 - newCorVal, handles );
+end
 
 
 % --- Executes on mouse press over axes background.
@@ -705,6 +769,7 @@ set( handles.sliderSag, 'Value', newSagVal );
 updateCorImg( -1, handles );
 updateTraImg( get( handles.sliderTra, 'Max' )+1 - newTraVal, handles );
 updateSagImg( newSagVal, handles );
+end
 
 
 % --- Executes on button press in checkboxShowLines.
@@ -714,6 +779,7 @@ setDataMainGui( 'showLines', get( hObject, 'Value' ) );
 updateTraLines( handles );
 updateSagLines( handles );
 updateCorLines( handles );
+end
 
 
 % --- Executes on button press in segment.
@@ -728,6 +794,7 @@ if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ... % == 0 me
 end
 
 segmentation;
+end
 
 
 % --- Executes on button press in enhanceContrast.
@@ -742,6 +809,7 @@ if isempty(findobj('type','figure','name','segmentation')) == 0 ...
 end
 
 enhanceContrast;
+end
 
 
 % --- Executes on button press in regionGrow.
@@ -755,6 +823,7 @@ if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
 end
 
 regionGrow;
+end
 
 
 % --- Executes on button press in manualSegmentation.
@@ -768,6 +837,7 @@ if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
 end
 
 manualSegmentation;
+end
 
 
 % --- Executes on button press in eraseOverlapping.
@@ -784,6 +854,7 @@ if isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
 end
 
 eraseOverlapping;
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -791,18 +862,21 @@ function transversal_CreateFcn(hObject, eventdata, handles)
 %show no ticks
 set(gca,'xtick',[]); 
 set(gca,'ytick',[]);
+end
 
 
 % --- Executes during object creation, after setting all properties.
 function sagittal_CreateFcn(hObject, eventdata, handles)
 set(gca,'xtick',[]); 
 set(gca,'ytick',[]);
+end
 
 
 % --- Executes during object creation, after setting all properties.
 function coronal_CreateFcn(hObject, eventdata, handles)
 set(gca,'xtick',[]); 
 set(gca,'ytick',[]);
+end
 
 
 % --- Executes on button press in deleteImage.
@@ -863,6 +937,7 @@ set( handles.currImage, 'String', files(sldTra).name );
 updateTraImg( sldTra, handles );
 updateSagImg( sldSag, handles );
 updateCorImg( sldCor, handles );
+end
 
 
 % --------------------------------------------------------------------
@@ -870,6 +945,7 @@ function menuMask_Callback(hObject, eventdata, handles)
 % hObject    handle to menuMask (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+end
 
 
 % --------------------------------------------------------------------
@@ -952,6 +1028,7 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         axes( hmanualSegmentation.testView );
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
+end
 end
 
 
@@ -1044,6 +1121,7 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
+end
 
 
 % --------------------------------------------------------------------
@@ -1097,6 +1175,7 @@ end
 close( h );
 
 msgbox( 'Label successfully stored.','Save success');
+end
 
 
 % --------------------------------------------------------------------
@@ -1205,6 +1284,7 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
+end
 
 
 % --- "upDown" function for the "+" or "-" button in external views
@@ -1246,12 +1326,306 @@ if currView == 1
     set( handlesMain.sliderTra, 'Value', val );
     fhUpdateTraImg  = getDataMainGui( 'fhUpdateTraImg' );
     feval( fhUpdateTraImg, val, handlesMain );
+    updateSagLines( handlesMain );
+    updateCorLines( handlesMain );
 elseif currView == 2
     set( handlesMain.sliderSag, 'Value', val );
     fhUpdateSagImg  = getDataMainGui( 'fhUpdateSagImg' );
     feval( fhUpdateSagImg, val, handlesMain );
+    updateTraLines( handlesMain );
+    updateCorLines( handlesMain );
 elseif currView == 3
     set( handlesMain.sliderCor, 'Value', val );
     fhUpdateCorImg  = getDataMainGui( 'fhUpdateCorImg' );
     feval( fhUpdateCorImg, val, handlesMain );
+    updateTraLines( handlesMain );
+    updateSagLines( handlesMain );
+end
+end
+
+ 
+function updateLog( methodHistory, view, index )
+
+log     = getDataMainGui( 'log' );
+logAll  = getDataMainGui( 'logAll' );
+logTra  = getDataMainGui( 'logTra' );
+logSag  = getDataMainGui( 'logSag' );
+logCor  = getDataMainGui( 'logCor' );
+sMH     = size( methodHistory, 2 );
+sLT     = size( log, 2 );
+
+for i=1:1:sMH
+    % due to "undo" some cells might be empty - only add nonempty ones
+    if size( methodHistory{ i } ) ~= 0
+        methodHistory(i) = remapLog( methodHistory(i) );
+        
+        % LOG
+        % input view and index
+        if i == 1
+            log{ sLT + 1 } = [ view, num2str( index ), methodHistory( i ) ];
+        % only append from now on
+        else
+            log{ sLT + 1 } = [ log{ sLT + 1 }, methodHistory( i ) ];
+        end
+
+        % SPECIFIC LOG
+        if strcmp( view, 'all' )
+            % add to all
+            logAll{ 1 } = [ logAll{ 1 }, methodHistory( i ) ] ;
+            
+            % add methodHistory to all images that had been manipulated yet
+            % through the "applyToImage" function (single image manipulation)
+            % ,to keep the correct order
+            
+            % tra
+            sTra = size( logTra, 2 );
+            for j=1:1:sTra
+                if size( logTra{ j } ) ~= 0
+                    logTra{ j } = [ logTra{ j }, methodHistory( i ) ] ;
+                end
+            end
+            
+            % sag
+            sSag = size( logSag, 2 );
+            for j=1:1:sSag
+                if size( logSag{ j } ) ~= 0
+                    logSag{ j } = [ logSag{ j }, methodHistory( i ) ] ;
+                end
+            end
+            
+            % cor
+            sCor = size( logCor, 2 );
+            for j=1:1:sCor
+                if size( logCor{ j } ) ~= 0
+                    logCor{ j } = [ logCor{ j }, methodHistory( i ) ] ;
+                end
+            end
+            
+        elseif strcmp( view, 'tra' )    
+            % first time? prepend already applied methods
+            if size( logTra{ index } ) == 0
+                logTra{ index } = [ logAll{ 1 } ] ;
+            end
+            
+            logTra{ index } = [ logTra{ index }, methodHistory( i ) ] ;
+            
+        elseif strcmp( view, 'sag' ) 
+            if size( logSag{ index } ) == 0
+                logSag{ index } = [ logAll{ 1 } ] ;
+            end
+            
+            logSag{ index } = [ logSag{ index }, methodHistory( i ) ] ;
+            
+        elseif strcmp( view, 'cor' )  
+            if size( logCor{ index } ) == 0
+                logCor{ index } = [ logAll{ 1 } ] ;
+            end
+            
+            logCor{ index } = [ logCor{ index }, methodHistory( i ) ] ;
+            
+        end
+    end
+end
+
+setDataMainGui( 'log', log );
+setDataMainGui( 'logAll', logAll );
+setDataMainGui( 'logTra', logTra );
+setDataMainGui( 'logSag', logSag );
+setDataMainGui( 'logCor', logCor );
+
+end
+
+
+% save the log-file
+function saveLog()
+
+log    = getDataMainGui( 'log' );
+logAll = getDataMainGui( 'logAll' );
+logTra = getDataMainGui( 'logTra' );
+logSag = getDataMainGui( 'logSag' );
+logCor = getDataMainGui( 'logCor' );
+sLog   = size( log, 2 );
+
+% manipulation happend yet?
+if size( log, 2 ) == 0
+    warndlg( 'Nothing to log, no manipulation yet.', 'Attention' );
+    return;
+end
+
+% save dialog
+defaultFileName = strcat( date, '.txt' );
+
+[filename, pathname ] = uiputfile( ...
+       { '*.txt',  'Text-files (*.txt)' }, ...
+        'Save as', defaultFileName );
+
+% cancel?
+if isequal(filename,0) || isequal(pathname,0)
+    return;
+end
+    
+fullpath = strcat( pathname, filename );
+fid      = fopen( fullpath, 'wt' );
+
+% log
+
+fprintf( fid, '%s\r\n\n', 'History (View Index - Method1 / Method2 ...)' );
+% { view, index, {methodCell}, {methodCell}, ... }
+for i=1:1:sLog
+    fprintf( fid, '\t%s\t', log{i}{1} );      % view
+    fprintf( fid, '\t%s\t', log{i}{2}, '-' );   % index
+    
+    sMethods = size( log{i}, 2 );
+    for j=3:1:sMethods
+        fprintf( fid, '%s\t', log{i}{j}{:}, '/' ); % methods + values
+    end
+    
+    fprintf( fid, '%s\n', '' );
+end
+
+% all
+    
+fprintf( fid, '\n\n%s\r\n\n', 'Applied to all images.' );
+sAll = size(logAll{1}, 2);
+for i=1:1:sAll
+    fprintf( fid, '\t%s', '' );
+    fprintf( fid, '%s\t', logAll{1}{i}{:}, ' ' );
+    fprintf( fid, '%s\n', '');
+end
+
+% tra sag cor
+
+fprintf( fid, '\n\n%s\r\n\n', 'Applied to transversal images.' );
+sTra = size( logTra, 2 );
+for i=1:1:sTra
+	if size( logTra{ i } ) ~= 0
+        fprintf( fid, '%s\t', '' );
+        fprintf( fid, '%s', 'Image ', num2str(i) );
+        fprintf( fid, '%s\n', '' );
+        
+        innerSizeTra = size( logTra{i}, 2 );
+        for j=1:1:innerSizeTra
+
+            fprintf( fid, '\t\t%s', '' );
+            fprintf( fid, '%s\t', logTra{i}{j}{:}, ' ' );
+            fprintf( fid, '%s\n', '' );
+        end 
+	end
+end
+
+fprintf( fid, '\n\n%s\r\n\n', 'Applied to sagittal images.' );
+sSag = size( logSag, 2 );
+for i=1:1:sSag
+	if size( logSag{ i } ) ~= 0
+        fprintf( fid, '%s\t', '' );
+        fprintf( fid, '%s', 'Image ', num2str(i) );
+        fprintf( fid, '%s\n', '' );
+        
+        innerSizeSag = size(logSag{i}, 2);
+        for j=1:1:innerSizeSag
+            
+            fprintf( fid, '\t\t%s', '' );
+            fprintf( fid, '%s\t', logSag{i}{j}{:}, ' ' );
+            fprintf( fid, '%s\n', '' ); 
+        end 
+	end
+end
+
+fprintf( fid, '\n\n%s\r\n\n', 'Applied to coronal images.' );
+sCor = size( logCor, 2 );
+for i=1:1:sCor
+	if size( logCor{ i } ) ~= 0
+        fprintf( fid, '%s\t', '' );
+        fprintf( fid, '%s', 'Image ', num2str(i) );
+        fprintf( fid, '%s\n', '' );
+        
+        innerSizeCor = size(logCor{i}, 2);
+        for j=1:1:innerSizeCor
+            
+            fprintf( fid, '\t\t%s', '' );
+            fprintf( fid, '%s\t', logCor{i}{j}{:}, ' ' );
+            fprintf( fid, '%s\n', '' ); 
+        end 
+	end
+end
+
+fclose(fid);
+
+msgbox( 'Logfile successfully stored.','Save success');
+
+end
+
+
+
+% rename methodnames in the code to methodname in the programm and remap
+% inputvalues
+function newCell = remapLog( cell )
+
+name = cell{1}(1);
+
+% enhanceContrast
+
+if strcmp( name, 'imadjust' )
+	newCell{1} = { 'Distribute intensities  ' };
+   
+elseif strcmp( name, 'imadjust_coherent' )
+    view  = cell{1}{4};
+    slide = cell{1}{5};
+    newCell{1} = { 'Distribute intensities (coherent)   ',  'view', view, 'slide', slide };
+    
+elseif strcmp( name, 'gamma' )
+    g = cell{1}{4};
+    newCell{1} = { 'Weighted distribute intensities ', num2str( g ) };
+    
+elseif strcmp( name, 'adapthisteq' )
+    M = cell{1}{2};
+    N = cell{1}{3};
+    newCell{1} = { 'Adaptive histogram equalization ', num2str( M ), num2str( N ) };
+    
+elseif strcmp( name, 'imcomplement' )
+    newCell{1} = { 'Complement  ' };
+    
+elseif strcmp( name, 'log' )
+    c = cell{1}{2};
+    newCell{1} = { 'Logarithmic transformation  ', num2str( c ) };
+    
+elseif strcmp( name, 'stretch' )
+    E = cell{1}{2};
+    m = cell{1}{3};
+    newCell{1} = { 'Contrast-stretching transformation  ', num2str( E ), num2str( m ) };
+    
+% segmentation
+
+elseif strcmp( name, 'trimToRect' )
+  	points  = cell{1}{2};
+    newCell{1} = { 'Trim to rectangle', num2str( points( 1 )), num2str( points( 2 )), num2str( points( 3 )), num2str( points( 4 )) };
+    
+elseif strcmp( name, 'grayScale' )
+    newMin = cell{1}{2}; 
+    newMax = cell{1}{3};
+    newCell{1} = { 'New interval of gray levels', num2str( newMin ), num2str( newMax ) };
+    
+elseif strcmp( name, 'roipoly' )
+    x = cell{1}{4};
+    y = cell{1}{5};
+    sizeX = size(x, 1);
+    points = '';
+    
+    for i=1:1:sizeX
+        points = strcat( points, num2str( round( x( i  ))), ',', num2str( round( y( i ))), { '   ' } );
+    end
+
+    newCell{1} = { 'Cut out inner/outer circle', cell{1}{2}, 'Points', points{1} };
+   
+end
+end
+
+
+% --------------------------------------------------------------------
+function saveLog_Callback(hObject, eventdata, handles)
+% hObject    handle to saveLog (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+saveLog();
 end

@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before segmentation is made visible.
@@ -72,13 +73,14 @@ setappdata(handles.segmentation, 'currSagImg'            , currSagImg );
 setappdata(handles.segmentation, 'currCorImg'            , currCorImg );
 setappdata(handles.segmentation, 'currMethod'            , 'trimToRect' );
 setappdata(handles.segmentation, 'roi'                   , -1 );    % regionOfInterest -1 = not used, 1 = used
+setappdata(handles.segmentation, 'isInfo'                , 0 );
 
 set( handles.val2 , 'string' , strcat( num2str(rows), ',', num2str(columns) ) );
 
-setappdata(handles.segmentation, 'methodHistoryThisImage'         , {} );
-setappdata(handles.segmentation, 'methodHistoryIndexThisImage'    , 0 );
-setappdata(handles.segmentation, 'methodHistoryAllImages'         , {} );
-setappdata(handles.segmentation, 'methodHistoryIndexAllImages'    , 0 );
+setappdata(handles.segmentation, 'methodHistoryROI'         , {} );
+setappdata(handles.segmentation, 'methodHistoryIndexROI'    , 0 );
+setappdata(handles.segmentation, 'methodHistory'         , {} );
+setappdata(handles.segmentation, 'methodHistoryIndex'    , 0 );
 
 imshow( currTraImg );
 
@@ -96,6 +98,7 @@ clc;
 
 % UIWAIT makes segmentation wait for user response (see UIRESUME)
 % uiwait(handles.segmentation);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -107,6 +110,7 @@ function varargout = segmentation_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes when user attempts to close segmentation.
@@ -117,18 +121,21 @@ function segmentation_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
+end
 
 
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
 setappdata(hMain, name, value);
+end
 
 
 % --- getData globallike
 function data = getDataMainGui( name )
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
+end
 
 
 % --- keep the current zoom state
@@ -142,6 +149,7 @@ imshow( img, 'parent', handles.testView );
 % set current zoom state
 set(handles.testView, 'xlim', xZoom);
 set(handles.testView, 'ylim', yZoom);
+end
 
 
 function val1_Callback(hObject, eventdata, handles)
@@ -161,6 +169,7 @@ end
 if methodNumber ~= 1 && methodNumber ~= 2 && methodNumber ~= 3
     applyToView( handles, 1 );
 end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -173,6 +182,7 @@ function val1_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -194,6 +204,7 @@ end
 if methodNumber ~= 1 && methodNumber ~= 2
     applyToView( handles, 1 );
 end
+end
 
     
 
@@ -208,31 +219,31 @@ function val2_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
-function imgSegmented = applyMethods( img, methodHistoryAllImages, methodHistoryIndexAllImages, handles )
-    mH      = methodHistoryAllImages;
-    mHIndex = methodHistoryIndexAllImages;
+function imgSegmented = applyMethods( img, methodHistory, methodHistoryIndex, handles )
+    mH      = methodHistory;
+    mHIndex = methodHistoryIndex;
 
     % apply previous methods
     for i = 1:1:mHIndex;
         mName = mH{i}(1);
         
         if strcmp(mName, 'trimToRect')
-            points       = mH{i}(2);
-            points       = points{1};
+            points       = mH{i}{2};
             img          = setToZero( img, 'rec', points, handles );     
             
         elseif strcmp(mName, 'grayScale')
-            newMin       = mH{i}(2); 
-            newMax       = mH{i}(3);
-            newMin = newMin{1}(1); newMax = newMax{1}(1);
+            newMin       = mH{i}{2}; 
+            newMax       = mH{i}{3};
             img          = setToZero( img, 'min', newMin );
             img          = setToZero( img, 'max', newMax );
         end     
     end
     
     imgSegmented = img;
+end
 
 
 % --- check if the inputvalues are valid 
@@ -267,6 +278,7 @@ function check = checkTrimToRect( handles )
         check = false;
         return;
     end
+end
 
 
 % --- draw the rectangle into the image    
@@ -293,7 +305,7 @@ function drawTrimToRect( handles )
     else                  % coronal
         rectangle( 'Position', [ p1x 1 p2x-p1x  numImages ], 'EdgeColor', 'r', 'parent', handles.testView );
     end
-        
+end
     
     
 % --- set pixel to 0 
@@ -308,7 +320,6 @@ elseif strcmpi( 'max', minMaxRec )
 elseif strcmpi( 'rec', minMaxRec )
     sImg        = size(image); % depends on view
     mask        = zeros( sImg(1), sImg(2) );
-    mask        = im2uint16( mask );
     
     currView    = get( handles.chooseView, 'Value' );
     % if trans
@@ -319,12 +330,12 @@ elseif strcmpi( 'rec', minMaxRec )
     elseif currView == 3
         mask( 1:sImg(1), val(1):val(3) ) = 1;
     end
-    % pointwise multiply with 0 or 1 erases or keeps the pixel
-    image = image .* mask;
     
+    image( mask==0 ) = 0;
 end
 
 newImg = image;
+end
 
 
 % --- applies to view
@@ -337,8 +348,8 @@ if applyMethod == 0
     setappdata(handles.segmentation, 'currImg', currImg );
     
     testImg = currImg;
-    mH      = getappdata(handles.segmentation, 'methodHistoryAllImages' );
-    mHIndex = getappdata(handles.segmentation, 'methodHistoryIndexAllImages' );
+    mH      = getappdata(handles.segmentation, 'methodHistory' );
+    mHIndex = getappdata(handles.segmentation, 'methodHistoryIndex' );
     
     % no previous methods
     if mHIndex == 0
@@ -357,13 +368,15 @@ if applyMethod == 0
     return
 end
 
+% now a method can be undone
+set( handles.undo, 'enable', 'on' );
 % get current method
 method  = getappdata(handles.segmentation, 'currMethod' );
 % get current test-image
 testImg = getappdata(handles.segmentation, 'currTestImg' );
 
-mH      = getappdata( handles.segmentation, 'methodHistoryAllImages' );
-mHIndex = getappdata( handles.segmentation, 'methodHistoryIndexAllImages' );
+mH      = getappdata( handles.segmentation, 'methodHistory' );
+mHIndex = getappdata( handles.segmentation, 'methodHistoryIndex' );
 mHIndex = mHIndex + 1;
 
 if strcmp(method, 'trimToRect')
@@ -381,13 +394,15 @@ if strcmp(method, 'trimToRect')
 elseif strcmp(method, 'grayScale')
     newMin          = round(str2double( get( handles.val1, 'string' )));
     newMax          = round(str2double( get( handles.val2, 'string' )));
+    maxNumber       = getDataMainGui( 'maxNumber' );
     
     % check for correct range
     if newMin < 0 || newMin > newMax
         warndlg( 'Value needs to be greater 0 and lower ''New max''.', 'Attention' );
         return;
-    elseif newMax > 65535 || newMax < newMin
-        warndlg( 'Value needs to be lower 65535 and greater ''New min''.', 'Attention' );
+    elseif newMax > maxNumber || newMax < newMin
+        s = strcat( ['Value needs to be lower ', num2str(maxNumber), ' and greater ''New min''.'] );
+        warndlg( s, 'Attention' );
         return;
     end
     
@@ -402,11 +417,12 @@ elseif strcmp(method, 'grayScale')
 %elseif
 end
 
-setappdata(handles.segmentation, 'methodHistoryAllImages'         , mH );
-setappdata(handles.segmentation, 'methodHistoryIndexAllImages'    , mHIndex );
+setappdata(handles.segmentation, 'methodHistory'         , mH );
+setappdata(handles.segmentation, 'methodHistoryIndex'    , mHIndex );
 setappdata(handles.segmentation, 'currTestImg'           , testImg);
 
 imshowKeepZoom( testImg );
+end
     
 
 % --- Executes on button press in applyToView.
@@ -416,6 +432,7 @@ function applyToView_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 applyToView( handles, 1 );
+end
 
 
 % --- Executes on button press in applyToImage.
@@ -430,51 +447,65 @@ currMethod  = get( handles.chooseMethod, 'Value' );
 currTestImg = getappdata( handles.segmentation, 'currTestImg' );
 currView    = get( handles.chooseView, 'Value' );
 hMain       = getDataMainGui( 'handles' );
+mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndex' );
+mHIndexROI  = getappdata( handles.segmentation, 'methodHistoryIndexROI' );
+
+if mHIndex == 0 && mHIndexROI == 0
+    return;
+end
 
 % if single image methode
 % if "Cut out inner/outer circle"
 if currMethod == 3 
+    mH              = getappdata( handles.segmentation, 'methodHistoryROI' );
     currTestImgRoi  = getappdata( handles.segmentation, 'currTestImgRoi' );
     
     if currView == 1        % tra
-        currImgIndex = get( hMain.sliderTra, 'Value' );
-        images(:,:,currImgIndex) = currTestImgRoi;
+        logView   = 'tra';
+        currIndex = get( hMain.sliderTra, 'Value' );
+        images(:,:,currIndex) = currTestImgRoi;
         
     elseif currView == 2    % sag
-        currImgIndex   = get( hMain.sliderSag, 'Value' );
-        img            = images(:,currImgIndex,:);
-        sizeI          = size(img, 1); % 256
-        sizeJ          = size(img, 3); % 170
+        logView   = 'sag';
+        currIndex = get( hMain.sliderSag, 'Value' );
+        img       = images(:,currIndex,:);
+        sizeI     = size(img, 1); % 256
+        sizeJ     = size(img, 3); % 170
         
         for i=1:1:sizeI
             for j=1:1:sizeJ
-                images(i,currImgIndex,j) = currTestImgRoi(sizeJ+1 - j, i);
+                images(i,currIndex,j) = currTestImgRoi(sizeJ+1 - j, i);
             end
         end
 
     else                    % cor
-        currImgIndex   = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
-        img            = images(currImgIndex,:,:);
-        sizeI          = size(img, 2); % 256
-        sizeJ          = size(img, 3); % 170
+        logView   = 'cor';
+        currIndex = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
+        img       = images(currIndex,:,:);
+        sizeI     = size(img, 2); % 256
+        sizeJ     = size(img, 3); % 170
         
         for i=1:1:sizeI
             for j=1:1:sizeJ
-                images(currImgIndex,i,j) = currTestImgRoi(sizeJ+1 - j, i);
+                images(currIndex,i,j) = currTestImgRoi(sizeJ+1 - j, i);
             end
         end
     end
     
-    setappdata( handles.segmentation, 'methodHistoryThisImage'         , {} );
-	setappdata( handles.segmentation, 'methodHistoryIndexThisImage'    , 0 );
-    
+    set( handles.undo, 'enable', 'off' );
+    setappdata( handles.segmentation, 'methodHistoryROI'         , {} );
+	setappdata( handles.segmentation, 'methodHistoryIndexROI'    , 0 );
 
 else
+    mH = getappdata( handles.segmentation, 'methodHistory' );
+    
     if currView == 1      % transversal
+        logView               = 'tra';
         currIndex             = get( hMain.sliderTra, 'Value' );
         images(:,:,currIndex) = currTestImg;
     
     elseif currView == 2  % sagittal
+        logView        = 'sag';
         currIndex      = get( hMain.sliderSag, 'Value' );
         sizeI          = size(currTestImg, 2); % 256
         sizeJ          = size(currTestImg, 1); % 170
@@ -486,6 +517,7 @@ else
         end
     
     else                 % coronal
+        logView        = 'cor';
         currIndex      = get( hMain.sliderCor, 'Max' )+1 - get( hMain.sliderCor, 'Value' );
         sizeI          = size(currTestImg, 2); % 256
         sizeJ          = size(currTestImg, 1); % 170
@@ -514,6 +546,11 @@ feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
 % set currFigure as the current figure
 figure( currFigure );
 
+% update Log
+fhUpdateLog = getDataMainGui( 'fhUpdateLog' );
+feval( fhUpdateLog, mH, logView, currIndex );
+end
+
 
 % --- Executes on button press in applyToImages.
 function applyToImages_Callback(hObject, eventdata, handles)
@@ -525,22 +562,23 @@ currFigure  = gcf();
 images      = getDataMainGui( 'Images' );
 s           = size( images );
 numImages   = s( 3 );
-mH          = getappdata( handles.segmentation, 'methodHistoryAllImages' );
-mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndexAllImages' );
+mH          = getappdata( handles.segmentation, 'methodHistory' );
+mHIndex     = getappdata( handles.segmentation, 'methodHistoryIndex' );
 
+if mHIndex == 0
+    return;
+end
 
-% apply methodHistoryAllImages to all images
+% apply methodHistory to all images
 for i = numImages:-1:1
     img           = images(:,:,i);
     img           = applyMethods( img, mH, mHIndex, handles );
     images(:,:,i) = img(:,:);
 end
 
-setappdata( handles.segmentation, 'methodHistoryAllImages'         , {} );
-setappdata( handles.segmentation, 'methodHistoryIndexAllImages'    , 0 );
-
-
 setDataMainGui( 'Images', images );
+setappdata( handles.segmentation, 'methodHistory'         , {} );
+setappdata( handles.segmentation, 'methodHistoryIndex'    , 0 );
    
 % update hMain
 hMain          = getDataMainGui( 'handles' );
@@ -555,6 +593,12 @@ feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
 
 % set currFigure as the current figure
 figure( currFigure );
+set( handles.undo, 'enable', 'off' );
+
+% update Log
+fhUpdateLog = getDataMainGui( 'fhUpdateLog' );
+feval( fhUpdateLog, mH, 'all', -1 );
+end
 
 
 % --- Executes on selection change in chooseView.
@@ -582,6 +626,7 @@ applyToView( handles, 0 );
 if get( handles.chooseMethod, 'Value' ) == 1
     drawTrimToRect( handles );
 end
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -595,12 +640,14 @@ function chooseView_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 % --- Executes on button press in showHistogram.
 function showHistogram_Callback(hObject, eventdata, handles)
 
 figure, imhist( getappdata(handles.segmentation, 'currTestImg' ) );
+end
 
 
 function updateTestView(view, currImg)
@@ -609,12 +656,14 @@ currView    = getappdata(handles.segmentation, 'currView');
 
 if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
     setappdata(handles.segmentation, 'currTraImg', currImg );
+    setappdata(handles.segmentation, 'currImg', currImg );
 elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
     setappdata(handles.segmentation, 'currSagImg', currImg );
+    setappdata(handles.segmentation, 'currImg', currImg );
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.segmentation, 'currCorImg', currImg );
+    setappdata(handles.segmentation, 'currImg', currImg );
 end
-setappdata(handles.segmentation, 'currImg', currImg );
 
 if strcmp(currView,view)
     applyToView( handles, 0 );
@@ -623,6 +672,7 @@ if strcmp(currView,view)
     if get( handles.chooseMethod, 'Value' ) == 1
         drawTrimToRect( handles );
     end
+end
 end
 
 
@@ -634,21 +684,25 @@ currMethod = get( handles.chooseMethod, 'Value' );
 
 % if "Cut out inner/outer circle"
 if currMethod == 3 
-    mH      = getappdata(handles.segmentation, 'methodHistoryThisImage' );
-    mHIndex = getappdata(handles.segmentation, 'methodHistoryIndexThisImage' );
+    mH      = getappdata(handles.segmentation, 'methodHistoryROI' );
+    mHIndex = getappdata(handles.segmentation, 'methodHistoryIndexROI' );
 
     if mHIndex > 0
         mH{ mHIndex } = {};
         mHIndex = mHIndex - 1;
+        
+        if mHIndex == 0
+            set( hObject, 'enable', 'off' );
+        end 
+        
         currTestImg = getappdata(handles.segmentation, 'currTestImg' );
         
         for i = 1:1:mHIndex;
-            mName = mH{i}(1);
+            mName = mH{i}{1};
             
             if strcmp( mName, 'roipoly' )
-                innerOuter = mH{i}(2);
-                roi        = mH{i}(3);
-                roi = roi{1};
+                innerOuter = mH{i}{2};
+                roi        = mH{i}{3};
 
                 if strcmp( innerOuter, 'outer' )
                     currTestImg(~roi) = 0;
@@ -658,36 +712,35 @@ if currMethod == 3
                 end
             end
         end
-        setappdata(handles.segmentation, 'currTestImgRoi'               , currTestImg);
-        setappdata(handles.segmentation, 'methodHistoryThisImage'       , mH );
-        setappdata(handles.segmentation, 'methodHistoryIndexThisImage'  , mHIndex );
+        setappdata(handles.segmentation, 'currTestImgRoi'         , currTestImg);
+        setappdata(handles.segmentation, 'methodHistoryROI'       , mH );
+        setappdata(handles.segmentation, 'methodHistoryIndexROI'  , mHIndex );
         imshowKeepZoom( currTestImg ); 
-        return;
-    else
-        warndlg( 'No used method which could be undone.', 'Attention' );
         return;
     end
 end
 
 % else use code below
 
-mH      = getappdata(handles.segmentation, 'methodHistoryAllImages' );
-mHIndex = getappdata(handles.segmentation, 'methodHistoryIndexAllImages' );
+mH      = getappdata(handles.segmentation, 'methodHistory' );
+mHIndex = getappdata(handles.segmentation, 'methodHistoryIndex' );
 
 if mHIndex > 0
     mH{ mHIndex } = {};
     mHIndex = mHIndex - 1;
 
-    setappdata(handles.segmentation, 'methodHistoryAllImages'         , mH );
-    setappdata(handles.segmentation, 'methodHistoryIndexAllImages'    , mHIndex );
-    
-else
-    warndlg( 'No used method which could be undone.', 'Attention' );
-    return;
+    setappdata(handles.segmentation, 'methodHistory'     , mH );
+    setappdata(handles.segmentation, 'methodHistoryIndex', mHIndex );
+
 end
 
+% since mHIndex = mHIndex - 1, we can check if the new mHIndex is == 0
+if mHIndex == 0
+    set( hObject, 'enable', 'off' );
+end 
 
 applyToView( handles, 0 );
+end
 
 
 % --- Executes on selection change in chooseMethod.
@@ -700,6 +753,7 @@ function chooseMethod_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from chooseMethod
 
 currVal     = get(hObject,'Value'); 
+isInfo      = getappdata(handles.segmentation, 'isInfo' );
 
 if currVal == 1      % Trim to rectangle *
     setappdata(handles.segmentation, 'currMethod', 'trimToRect' );
@@ -719,7 +773,11 @@ if currVal == 1      % Trim to rectangle *
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
     set( handles.newCircle      , 'visible' , 'off' ); 
-    set( handles.infoText       , 'string'  , 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
+    
+    if isInfo
+        set( handles.infoText       , 'string'  , 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
+    end
+    
 elseif currVal == 2  % New interval of gray levels
     setappdata(handles.segmentation, 'currMethod', 'grayScale' );
     set( handles.valuePanel     , 'visible' , 'on' );
@@ -736,13 +794,17 @@ elseif currVal == 2  % New interval of gray levels
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
     set( handles.newCircle      , 'visible' , 'off' ); 
-    set( handles.infoText       , 'string'  , 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
+    
+    if isInfo
+        set( handles.infoText       , 'string'  , 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
+    end
+    
 elseif currVal == 3 % Cut out inner/outer circle
     setappdata(handles.segmentation, 'currMethod', 'roipoly' );
     currTestImg = getappdata(handles.segmentation, 'currTestImg' );
-    setappdata(handles.segmentation, 'currTestImgRoi'                 , currTestImg );
-    setappdata(handles.segmentation, 'methodHistoryThisImage'         , {} );
-    setappdata(handles.segmentation, 'methodHistoryIndexThisImage'    , 0 );
+    setappdata(handles.segmentation, 'currTestImgRoi'           , currTestImg );
+    setappdata(handles.segmentation, 'methodHistoryROI'         , {} );
+    setappdata(handles.segmentation, 'methodHistoryIndexROI'    , 0 );
     set( handles.valuePanel     , 'visible' , 'on' );
     set( handles.textVal1       , 'visible' , 'on' );
     set( handles.val1           , 'visible' , 'on' );
@@ -755,7 +817,11 @@ elseif currVal == 3 % Cut out inner/outer circle
     set( handles.newCircle      , 'visible' , 'on' ); 
     set( handles.applyToView    , 'visible' , 'off' );
     set( handles.undo           , 'string'  , 'Undo only this method' );
-    set( handles.infoText       , 'string'  , 'Create a circle by adding points to the image, then choose if you want to cut out the "inner" or the "outer" part. (-Adjust the position of the polygon and individual vertices by clicking and dragging. -To add new vertices, position the pointer along an edge and press the "a" key. -Double-click to add a final vertex and double-click again to submit the polygon. -Right-click to close the polygon without adding a vertex. -Delete by pressing Backspace or Escape.)' );
+    
+    if isInfo
+        set( handles.infoText       , 'string'  , 'Create a circle by adding points to the image, then choose if you want to cut out the "inner" or the "outer" part. (-Adjust the position of the polygon and individual vertices by clicking and dragging. -To add new vertices, position the pointer along an edge and press the "a" key. -Double-click to add a final vertex and double-click again to submit the polygon. -Right-click to close the polygon without adding a vertex. -Delete by pressing Backspace or Escape.)' );
+    end
+    
 end
 
 % * if trimToRect 
@@ -765,6 +831,8 @@ else
     currTestImg = getappdata(handles.segmentation, 'currTestImg' );
     imshowKeepZoom( currTestImg );
 end
+end
+
 
 % --- Executes during object creation, after setting all properties.
 function chooseMethod_CreateFcn(hObject, eventdata, handles)
@@ -777,6 +845,7 @@ function chooseMethod_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 % --- If Enable == 'on', executes on mouse press in 5 pixel border.
@@ -785,8 +854,28 @@ function infoText_ButtonDownFcn(hObject, eventdata, handles)
 % hObject    handle to infoText (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-if strcmp(get( hObject, 'string' ), '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values. Method: 1/(1 + (m/(f + eps))^E)')
-    % contrastStretchHelp
+
+if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
+    % info is shown
+    setappdata(handles.segmentation, 'isInfo', 1 );
+    
+    currVal     = get(handles.chooseMethod,'Value'); 
+
+    if currVal == 1     % Trim to rectangle
+        set( handles.infoText, 'string', 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
+    
+    elseif currVal == 2 % New interval of gray levels
+        set( handles.infoText, 'string', 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
+    
+    elseif currVal == 3 % Cut out inner/outer circle
+        set( handles.infoText, 'string', 'Create a circle by adding points to the image, then choose if you want to cut out the "inner" or the "outer" part. (-Adjust the position of the polygon and individual vertices by clicking and dragging. -To add new vertices, position the pointer along an edge and press the "a" key. -Double-click to add a final vertex and double-click again to submit the polygon. -Right-click to close the polygon without adding a vertex. -Delete by pressing Backspace or Escape.)' );
+    
+    end
+    
+else
+    set( hObject, 'string', 'Click me to get more informations.' );
+    setappdata(handles.segmentation, 'isInfo', 0 );
+end
 end
 
 
@@ -796,25 +885,28 @@ function newCircle_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-roi = getappdata(handles.segmentation, 'roi' );
-mH      = getappdata( handles.segmentation, 'methodHistoryThisImage' );
-mHIndex = getappdata( handles.segmentation, 'methodHistoryIndexThisImage' );
+roi     = getappdata(handles.segmentation, 'roi' );
+mH      = getappdata( handles.segmentation, 'methodHistoryROI' );
+mHIndex = getappdata( handles.segmentation, 'methodHistoryIndexROI' );
 mHIndex = mHIndex + 1;
 
 if roi == -1
     setappdata(handles.segmentation, 'roi', 1 ); % roi in use
-    roi = roipoly;
-    if size(roi, 1) > 0 % cancel?
+    [roi, x, y] = roipoly;
+    if size(roi, 1) > 0 % no cancel?
+        % now method can be undone
+        set( handles.undo, 'enable', 'on' );
+
         currTestImgRoi = getappdata(handles.segmentation, 'currTestImgRoi' );
         %inner outer?
         innerOuter = get( handles.val1, 'string');
         if strcmp( innerOuter, 'outer' )
             currTestImgRoi(~roi) = 0;
-            mH{ mHIndex }   = { 'roipoly', 'outer', roi };
+            mH{ mHIndex }   = { 'roipoly', 'outer', roi, x, y };
             
         elseif strcmp( innerOuter, 'inner' )
             currTestImgRoi(roi) = 0;
-            mH{ mHIndex }   = { 'roipoly', 'inner', roi };
+            mH{ mHIndex }   = { 'roipoly', 'inner', roi, x, y };
             
         else
             set( handles.val1, 'string', 'outer' );
@@ -824,14 +916,15 @@ if roi == -1
             
         end
         imshowKeepZoom( currTestImgRoi );
-        setappdata(handles.segmentation, 'methodHistoryThisImage'         , mH );
-        setappdata(handles.segmentation, 'methodHistoryIndexThisImage'    , mHIndex );
-        setappdata(handles.segmentation, 'currTestImgRoi' , currTestImgRoi );
+        setappdata(handles.segmentation, 'methodHistoryROI'     , mH );
+        setappdata(handles.segmentation, 'methodHistoryIndexROI', mHIndex );
+        setappdata(handles.segmentation, 'currTestImgRoi'       , currTestImgRoi );
     end
     setappdata(handles.segmentation, 'roi', -1 );
 else
     warndlg( 'You can only create one circle at a time, delete the current one, then create a new circle.', 'Attention' );
-end;
+end
+end
 
 
 % --- Executes when segmentation is resized.
@@ -873,6 +966,7 @@ set(handles.methodPanel,'Position',upos);
 set(handles.uipanel2,'Units',oldUnitsUIPanel2);
 
 set(hObject,'Units',oldUnits);
+end
 
 
 % --- Executes on button press in up.
@@ -883,6 +977,7 @@ function up_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, true );
+end
 
 
 % --- Executes on button press in up.
@@ -893,3 +988,4 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end

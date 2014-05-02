@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before contrastStretchHelp is made visible.
@@ -60,6 +61,7 @@ guidata(hObject, handles);
 
 % UIWAIT makes contrastStretchHelp wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -71,7 +73,7 @@ function varargout = contrastStretchHelp_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-
+end
 
 
 function E_Callback(hObject, eventdata, handles)
@@ -90,6 +92,7 @@ end
 set(hObject,'String', E);
 
 updateAxis( handles );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -103,7 +106,7 @@ function E_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
+end
 
 
 function m_Callback(hObject, eventdata, handles)
@@ -125,6 +128,7 @@ elseif m > 1
 end
 
 updateAxis( handles );
+end
 
 
 % --- update the Axis
@@ -163,6 +167,7 @@ if get(handles.showHelp, 'Value')
 end
 
 hold off;
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -176,6 +181,7 @@ function m_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 % --- Executes on button press in showHelp.
@@ -187,3 +193,4 @@ function showHelp_Callback(hObject, eventdata, handles)
 % Hint: get(hObject,'Value') returns toggle state of showHelp
 
 updateAxis( handles );
+end

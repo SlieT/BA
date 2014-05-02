@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 21-Apr-2014 20:23:13
+% Last Modified by GUIDE v2.5 25-Apr-2014 12:30:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before manualSegmentation is made visible.
@@ -69,6 +70,7 @@ setappdata(handles.manualSegmentation, 'currSagImg'     , currSagImg );
 setappdata(handles.manualSegmentation, 'currCorImg'     , currCorImg );
 setappdata(handles.manualSegmentation, 'currImgMask'    , 0 );
 setappdata(handles.manualSegmentation, 'currMask'       , 0 );
+setappdata(handles.manualSegmentation, 'isTransparent'  , true );
 setappdata(handles.manualSegmentation, 'transparency'   , 0.6 );
 setappdata(handles.manualSegmentation, 'maskColor'      , 'blue' );
 setappdata(handles.manualSegmentation, 'getpts'         , 0 ); % 0 = not in use
@@ -108,6 +110,7 @@ clc;
 
 % UIWAIT makes manualSegmentation wait for user response (see UIRESUME)
 % uiwait(handles.manualSegmentation);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -119,6 +122,7 @@ function varargout = manualSegmentation_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes when user attempts to close manualSegmentation.
@@ -130,18 +134,21 @@ function manualSegmentation_CloseRequestFcn(hObject, eventdata, handles)
 % Hint: delete(hObject) closes the figure
 
 delete(hObject);
+end
 
 
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
 setappdata(hMain, name, value);
+end
 
 
 % --- getData globallike
 function data = getDataMainGui( name )
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
+end
     
 
 % --- keep the current zoom state
@@ -155,6 +162,7 @@ h       = imshow( img, 'parent', handles.testView );
 % set current zoom state
 set(handles.testView, 'xlim', xZoom);
 set(handles.testView, 'ylim', yZoom);
+end
 
 
 % --- Executes on selection change in chooseView.
@@ -183,6 +191,7 @@ setappdata(handles.manualSegmentation, 'currImg', currImg);
 imshowKeepZoom( currImg );
 
 updateCurrImgMask( handles, 1 );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -196,6 +205,7 @@ function chooseView_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 function updateTestView(view, currImg)
@@ -204,17 +214,20 @@ currView    = getappdata(handles.manualSegmentation, 'currView');
 
 if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
     setappdata(handles.manualSegmentation, 'currTraImg', currImg );
+    setappdata(handles.manualSegmentation, 'currImg', currImg );
 elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
     setappdata(handles.manualSegmentation, 'currSagImg', currImg );
+    setappdata(handles.manualSegmentation, 'currImg', currImg );
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.manualSegmentation, 'currCorImg', currImg );
+    setappdata(handles.manualSegmentation, 'currImg', currImg );
 end
-setappdata(handles.manualSegmentation, 'currImg', currImg );
 
 if strcmp(currView,view)
     imshowKeepZoom( currImg );
     
     updateCurrImgMask( handles, 1 );
+end
 end
 
 
@@ -244,6 +257,7 @@ setappdata(handles.manualSegmentation, 'currMask', currMask );
 
 % update testView
 updateCurrImgMask( handles, 1 );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -267,6 +281,7 @@ if sizeM(1) == 0
 end
 
 set( hObject, 'string', dDmasks );
+end
 
 
 % update the current image mask
@@ -317,6 +332,8 @@ if show
     isSet    = get(handles.showMask,'Value');
     showMask( handles, isSet );
 end
+end
+
 
 % --- Executes on button press in showMask.
 function showMask_Callback(hObject, eventdata, handles)
@@ -326,6 +343,15 @@ function showMask_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of showMask
 
+isSet           = get(hObject,'Value');
+showMask( handles, isSet );
+end
+
+
+% --- show Mask
+function showMask( handles, isSet )
+
+% if no label return
 dDMasks  = getDataMainGui( 'dropDownMasks' );
 sizeM    = size(dDMasks);
 if sizeM(1) == 0
@@ -333,12 +359,6 @@ if sizeM(1) == 0
     return;
 end
 
-isSet           = get(hObject,'Value');
-showMask( handles, isSet );
-
-
-% --- show Mask
-function showMask( handles, isSet )
 % set axes otherwise it cant draw the transparent image over the mask
 axes(handles.testView);
 
@@ -351,28 +371,50 @@ end
 
 currImgMask = getappdata(handles.manualSegmentation, 'currImgMask' );
 maskColor   = getappdata(handles.manualSegmentation, 'maskColor' );
+isTrans     = getappdata(handles.manualSegmentation, 'isTransparent');
 
-if strcmp( maskColor, 'blue' )
-    mask = cat(3, zeros(size(img)), zeros(size(img)), currImgMask );
+if isTrans == 0
+    img(currImgMask   ==1) = 0;
+    color   = img;
+    % set maskcolor to max
+    maxNumber = getDataMainGui( 'maxNumber' );
+    color(currImgMask ==1) = maxNumber;
+        
+    if strcmp( maskColor, 'blue' )
+        mask = cat(3, img, img, color );
 
-elseif strcmp( maskColor, 'red' )
-    mask = cat(3, currImgMask, zeros(size(img)), zeros(size(img)) );
+    elseif strcmp( maskColor, 'red' )
+        mask = cat(3, color, img, img );
     
-elseif strcmp( maskColor, 'green' )
-    mask = cat(3, zeros(size(img)), currImgMask, zeros(size(img)) );
+    elseif strcmp( maskColor, 'green' )
+        mask = cat(3, img, color, img );
     
-end    
+    end 
+else
+    if strcmp( maskColor, 'blue' )
+        mask = cat(3, zeros(size(img)), zeros(size(img)), currImgMask );
+
+    elseif strcmp( maskColor, 'red' )
+        mask = cat(3, currImgMask, zeros(size(img)), zeros(size(img)) );
+    
+    elseif strcmp( maskColor, 'green' )
+        mask = cat(3, zeros(size(img)), currImgMask, zeros(size(img)) );
+    
+    end  
+end
 
 imshowKeepZoom( mask );
 
-transparency = getappdata(handles.manualSegmentation, 'transparency' );
-
-hold on;
-alpha = transparency;
-alpha_matrix = alpha*ones(size(img,1),size(img,2));
-h = imshowKeepZoom( img );
-set(h,'AlphaData',alpha_matrix);
-hold off;
+if isTrans
+    transparency = getappdata(handles.manualSegmentation, 'transparency' );
+    hold on;
+    alpha = transparency;
+    alpha_matrix = alpha*ones(size(img,1),size(img,2));
+    h = imshowKeepZoom( img );
+    set(h,'AlphaData',alpha_matrix);
+    hold off;
+end
+end
 
 
 % --- update the current (choosen) mask
@@ -418,6 +460,7 @@ name            = contents{get(handles.chooseMask,'Value')};
 masks.( name )  = currMask;
 setDataMainGui( 'masks', masks );
 setappdata(handles.manualSegmentation, 'currMask', currMask );
+end
 
 
 % --- Executes on button press in selectPixels.
@@ -466,6 +509,7 @@ isSet   = get(handles.showMask,'Value');
 showMask( handles, isSet );
 
 setappdata(handles.manualSegmentation, 'getpts', 0);
+end
 
 
 % --- Executes on selection change in maskColor.
@@ -483,6 +527,7 @@ setappdata(handles.manualSegmentation, 'maskColor', maskColor );
 
 isSet     = get(handles.showMask,'Value');
 showMask( handles, isSet );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -495,6 +540,7 @@ function maskColor_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -517,7 +563,8 @@ end
 setappdata(handles.manualSegmentation, 'transparency', val );
 
 isSet   = get(handles.showMask,'Value');
-showMask( handles, isSet )
+showMask( handles, isSet );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -530,6 +577,7 @@ function maskTransparency_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -568,7 +616,8 @@ if roi == 0
     showMask( handles, isSet );
 else
     warndlg( 'You can only create one region at a time, delete the current one, then create a new region.', 'Attention' );
-end;
+end
+end
 
 
 % --- Executes when manualSegmentation is resized.
@@ -610,7 +659,7 @@ set(handles.methodPanel,'Position',upos);
 set(handles.uipanel2,'Units',oldUnitsUIPanel2);
 
 set(hObject,'Units',oldUnits);
-
+end
 
 
 % --- Executes when uipanel2 is resized.
@@ -618,6 +667,7 @@ function uipanel2_ResizeFcn(hObject, eventdata, handles)
 % hObject    handle to uipanel2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+end
 
 
 % --- Executes on button press in up.
@@ -628,6 +678,7 @@ function up_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, true );
+end
 
 
 % --- Executes on button press in up.
@@ -638,3 +689,35 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end
+
+
+% --- Executes on button press in transToggle.
+function transToggle_Callback(hObject, eventdata, handles)
+% hObject    handle to transToggle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of transToggle
+
+val = get(hObject,'Value');
+
+setappdata(handles.manualSegmentation, 'isTransparent', val );
+isSet   = get(handles.showMask,'Value');
+showMask( handles, isSet );
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over infoText.
+function infoText_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to infoText (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
+    set( hObject, 'string', 'Mark single pixels to invert their label-value. Mark a region to add/delete all pixels within. Use normal button clicks to add points. A shift-, right-, or double-click adds a final point and ends the selection. Pressing Return or Enter ends the selection without adding a final point. Pressing Backspace or Delete removes the previously selected point.' ); 
+else
+    set( hObject, 'string', 'Click me to get more informations.' );
+end
+end

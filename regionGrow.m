@@ -22,7 +22,7 @@ function varargout = regionGrow(varargin)
 
 % Edit the above text to modify the response to help regionGrow
 
-% Last Modified by GUIDE v2.5 18-Apr-2014 23:40:14
+% Last Modified by GUIDE v2.5 25-Apr-2014 12:24:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before regionGrow is made visible.
@@ -106,9 +107,9 @@ end
 % clear the command line
 clc;
 
-
 % UIWAIT makes regionGrow wait for user response (see UIRESUME)
 % uiwait(handles.regionGrow);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -120,6 +121,7 @@ function varargout = regionGrow_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes when user attempts to close regionGrow.
@@ -131,18 +133,21 @@ function regionGrow_CloseRequestFcn(hObject, eventdata, handles)
 % Hint: delete(hObject) closes the figure
 
 delete(hObject);
+end
 
 
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
 setappdata(hMain, name, value);
+end
 
 
 % --- getData globallike
 function data = getDataMainGui( name )
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
+end
     
 
 % --- keep the current zoom state
@@ -156,6 +161,7 @@ h       = imshow( img, 'parent', handles.testView );
 % set current zoom state
 set(handles.testView, 'xlim', xZoom);
 set(handles.testView, 'ylim', yZoom);
+end
 
 
 % --- choose your seeds
@@ -167,6 +173,7 @@ function [X, Y] = chooseSeeds( handles )
 for i=1:1:size(X)
     X(i) = round(X(i));
     Y(i) = round(Y(i));
+end
 end
 
 
@@ -181,6 +188,7 @@ for i=1:1:size(X)
 end
 
 setappdata(handles.regionGrow, 'currSeedMask', seedMask );
+end
 
 
 % --- delete seeds from seedMask
@@ -194,6 +202,7 @@ for i=1:1:size(X)
 end
 
 setappdata(handles.regionGrow, 'currSeedMask', seedMask );
+end
 
 
 % --- draw seeds below current image
@@ -212,6 +221,7 @@ h               = imshowKeepZoom(img);
 set( h,'AlphaData',alpha_matrix );
     
 hold off;
+end
 
 
 % --- regiongrow algorithem
@@ -260,6 +270,7 @@ end
 % obtain the regions corresponding to each seed in S. Function
 % bwlabel assigns a different integer to each connected region.	
 [g, NR] = bwlabel(imreconstruct(SI, TI));
+end
 
 
 % --- applies to view
@@ -301,6 +312,7 @@ set(h,'AlphaData',alpha_matrix);
 hold off;
 
 showMaskMethod( handles );
+end
 
 
 % --- Executes on button press in applyToView.
@@ -310,6 +322,7 @@ function applyToView_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 applyToView( handles, 1 );
+end
 
 
 % --- Executes on selection change in chooseView.
@@ -337,6 +350,7 @@ end
 setappdata(handles.regionGrow, 'currImgMask', 0 );
 setappdata(handles.regionGrow, 'currImg', currImg);
 applyToView( handles, 0 );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -350,6 +364,7 @@ function chooseView_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 function updateTestView(view, currImg)
@@ -358,15 +373,18 @@ currView    = getappdata(handles.regionGrow, 'currView');
 
 if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
     setappdata(handles.regionGrow, 'currTraImg', currImg );
+    setappdata(handles.regionGrow, 'currImg', currImg );
 elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
     setappdata(handles.regionGrow, 'currSagImg', currImg );
+    setappdata(handles.regionGrow, 'currImg', currImg );
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.regionGrow, 'currCorImg', currImg );
+    setappdata(handles.regionGrow, 'currImg', currImg );
 end
-setappdata(handles.regionGrow, 'currImg', currImg );
 
 if strcmp(currView,view)
     applyToView( handles, 0 );
+end
 end
 
 
@@ -423,6 +441,7 @@ elseif currMethod == 3  % Delete from current seeds
 end
 
 setappdata(handles.regionGrow, 'getpts', 0);
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -435,6 +454,7 @@ function chooseSeedMethod_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -457,6 +477,7 @@ set( hObject, 'string', thresh );
 
 % invoke regiongrow
 applyToView( handles, 1 );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -469,6 +490,7 @@ function thresh_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -498,6 +520,7 @@ currMask = masks.( name );
 setappdata(handles.regionGrow, 'currMask', currMask );
 
 showMaskMethod( handles );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -521,6 +544,7 @@ if sizeM(1) == 0
 end
 
 set( hObject, 'string', dDmasks );
+end
 
 
 % --- retuns the current default mask
@@ -555,6 +579,7 @@ else                 % coronal
     currDefaultMask     = imtransform( currDefaultMask,manipulate,nearestNeighbour );
     
 end
+end
 
 
 % --- show the current mask method
@@ -584,6 +609,7 @@ end
 
 currDefaultMask = getCurrDefaultMask( handles );
 isTrans         = getappdata(handles.regionGrow, 'isTransparent');
+maxNumber       = getDataMainGui( 'maxNumber' );
 
 % what method?
 if currMethod == 1      % New/Renew Mask
@@ -596,8 +622,8 @@ if currMethod == 1      % New/Renew Mask
         % set maskcolor to max
         green = img;
         blue  = img;
-        green(currImgMask       ==1) = 65535;
-        blue(currDefaultMask    ==1) = 65535;
+        green(currImgMask       ==1) = maxNumber;
+        blue(currDefaultMask    ==1) = maxNumber;
         colorMask                    = cat(3, img, green, blue);
     end
     
@@ -609,7 +635,7 @@ elseif currMethod == 2  % New/Renew Mask (show seeded mask)
     else
         img(currImgMask         ==1) = 0;
         green = img;
-        green(currImgMask       ==1) = 65535;
+        green(currImgMask       ==1) = maxNumber;
         colorMask                    = cat(3, img, green, img);
     end
     imshowKeepZoom( colorMask );
@@ -625,8 +651,8 @@ elseif currMethod == 3  % Add to current Mask
         % set maskcolor to max
         green = img;
         blue  = img;
-        green(currImgMask       ==1) = 65535;
-        blue(currDefaultMask    ==1) = 65535;
+        green(currImgMask       ==1) = maxNumber;
+        blue(currDefaultMask    ==1) = maxNumber;
         colorMask                    = cat(3, img, green, blue);
     end
     imshowKeepZoom( colorMask );
@@ -646,8 +672,8 @@ elseif currMethod == 4  % Delete from current Mask
         % set maskcolor to max
         green = img;
         blue  = img;
-        green(currImgMask       ==1) = 65535;
-        blue(currDefaultMask    ==1) = 65535;
+        green(currImgMask       ==1) = maxNumber;
+        blue(currDefaultMask    ==1) = maxNumber;
         colorMask                    = cat(3, img, green, blue);
     end
     imshowKeepZoom( colorMask );
@@ -658,16 +684,14 @@ end
 
 setappdata(handles.regionGrow, 'currImgMaskMethod', currImgMask );
 
-if isTrans
-     
-    
-    
+if isTrans      
     hold on;
     alpha = getappdata(handles.regionGrow, 'alpha' );
     alpha_matrix = alpha*ones(size(img,1),size(img,2));
     h = imshowKeepZoom( img );
     set(h,'AlphaData',alpha_matrix);
     hold off;
+end
 end
 
 
@@ -681,7 +705,7 @@ function chooseMaskMethod_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from chooseMaskMethod
 
 showMaskMethod( handles );
-
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -694,6 +718,7 @@ function chooseMaskMethod_CreateFcn(hObject, eventdata, handles)
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
+end
 end
 
 
@@ -772,6 +797,7 @@ contents = cellstr(get(handles.chooseMask,'String'));
 name     = contents{get(handles.chooseMask,'Value')};
 masks.( name ) = currMask;
 setDataMainGui( 'masks', masks );
+end
 
 
 % --- Executes when regionGrow is resized.
@@ -813,6 +839,7 @@ set(handles.methodPanel,'Position',upos);
 set(handles.uipanel2,'Units',oldUnitsUIPanel2);
 
 set(hObject,'Units',oldUnits);
+end
 
 
 % --- Executes on button press in transToggle.
@@ -833,7 +860,7 @@ end
 
 setappdata(handles.regionGrow, 'isTransparent', val );
 showMaskMethod( handles );
-
+end
 
 
 function transInput_Callback(hObject, eventdata, handles)
@@ -847,6 +874,7 @@ function transInput_Callback(hObject, eventdata, handles)
 val = str2double(get(hObject,'String'));
 setappdata(handles.regionGrow, 'alpha', val );
 showMaskMethod( handles );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -860,6 +888,7 @@ function transInput_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 % --- Executes on button press in up.
@@ -870,6 +899,7 @@ function up_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, true );
+end
 
 
 % --- Executes on button press in up.
@@ -880,3 +910,21 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over infoText.
+function infoText_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to infoText (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% no isInfo necessary since there is only one infoText
+
+if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
+    set( hObject, 'string', 'Seeds(red) are the starting point for the "region grow"(green) algorithm whereas the threshold decides which pixels are added to the growing reagion. Blue shows the "old/current" label while the overlapped parts are colored teal.' ); 
+else
+    set( hObject, 'string', 'Click me to get more informations.' );
+end
+end

@@ -22,7 +22,7 @@ function varargout = eraseOverlapping(varargin)
 
 % Edit the above text to modify the response to help eraseOverlapping
 
-% Last Modified by GUIDE v2.5 21-Apr-2014 14:59:19
+% Last Modified by GUIDE v2.5 25-Apr-2014 12:41:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -42,6 +42,7 @@ else
     gui_mainfcn(gui_State, varargin{:});
 end
 % End initialization code - DO NOT EDIT
+end
 
 
 % --- Executes just before eraseOverlapping is made visible.
@@ -82,6 +83,7 @@ clc;
 
 % UIWAIT makes eraseOverlapping wait for user response (see UIRESUME)
 % uiwait(handles.eraseOverlapping);
+end
 
 
 % --- Outputs from this function are returned to the command line.
@@ -93,6 +95,7 @@ function varargout = eraseOverlapping_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
+end
 
 
 % --- Executes when user attempts to close eraseOverlapping.
@@ -104,18 +107,21 @@ function eraseOverlapping_CloseRequestFcn(hObject, eventdata, handles)
 % Hint: delete(hObject) closes the figure
 
 delete(hObject);
+end
 
 
 % --- setData globallike
 function setDataMainGui( name, value )
 hMain = getappdata(0, 'hMainGui');
 setappdata(hMain, name, value);
+end
 
 
 % --- getData globallike
 function data = getDataMainGui( name )
 hMain = getappdata(0, 'hMainGui');
 data  = getappdata(hMain, name);
+end
     
 
 % --- keep the current zoom state
@@ -129,6 +135,7 @@ imshow( img, 'parent', handles.testView );
 % set current zoom state
 set(handles.testView, 'xlim', xZoom);
 set(handles.testView, 'ylim', yZoom);
+end
 
 
 % --- Executes on selection change in chooseView.
@@ -155,6 +162,7 @@ end
 setappdata(handles.eraseOverlapping, 'currImg', currImg);
 
 imshowKeepZoom( currImg );
+end
 
 
 % --- Executes during object creation, after setting all properties.
@@ -168,6 +176,7 @@ function chooseView_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
 
 
 function updateTestView(view, currImg)
@@ -176,16 +185,19 @@ currView    = getappdata(handles.eraseOverlapping, 'currView');
 
 if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
     setappdata(handles.eraseOverlapping, 'currTraImg', currImg );
+    setappdata(handles.eraseOverlapping, 'currImg', currImg );
 elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
     setappdata(handles.eraseOverlapping, 'currSagImg', currImg );
+    setappdata(handles.eraseOverlapping, 'currImg', currImg );
 elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
     setappdata(handles.eraseOverlapping, 'currCorImg', currImg );
+    setappdata(handles.eraseOverlapping, 'currImg', currImg );
 end
-setappdata(handles.eraseOverlapping, 'currImg', currImg );
 
 if strcmp(currView,view)
 
     imshowKeepZoom( currImg );
+end
 end
 
 
@@ -228,7 +240,7 @@ set(handles.methodPanel,'Position',upos);
 set(handles.uipanel2,'Units',oldUnitsUIPanel2);
 
 set(hObject,'Units',oldUnits);
-
+end
 
 
 % --- Executes when uipanel2 is resized.
@@ -236,6 +248,7 @@ function uipanel2_ResizeFcn(hObject, eventdata, handles)
 % hObject    handle to uipanel2 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+end
 
 
 % --- Executes on button press in up.
@@ -246,6 +259,7 @@ function up_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, true );
+end
 
 
 % --- Executes on button press in up.
@@ -256,6 +270,7 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end
 
 
 % --- Executes on button press in addMask.
@@ -313,6 +328,7 @@ for i=1:1:sizeS
 end
 
 setDataMainGui( 'eraseMasks', eraseMasks );
+end
 
 
 % --- Executes on button press in removeMask.
@@ -375,3 +391,19 @@ for i=1:1:sizeS
 end
 
 setDataMainGui( 'eraseMasks', eraseMasks );
+end
+
+
+% --- If Enable == 'on', executes on mouse press in 5 pixel border.
+% --- Otherwise, executes on mouse press in 5 pixel border or over infoText.
+function infoText_ButtonDownFcn(hObject, eventdata, handles)
+% hObject    handle to infoText (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
+    set( hObject, 'string', 'Click on the overlapping pixels(color) to add them to one of the masks.' ); 
+else
+    set( hObject, 'string', 'Click me to get more informations.' );
+end
+end
