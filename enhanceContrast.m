@@ -491,8 +491,7 @@ function applyToImages_Callback(hObject, eventdata, handles)
 
 currFigure  = gcf();
 images      = getDataMainGui( 'Images' );
-s           = size( images );
-numImages   = s( 3 );
+numImages   = size( images, 3 );
 mH          = getappdata( handles.enhanceContrast, 'methodHistory' );
 mHIndex     = getappdata( handles.enhanceContrast, 'methodHistoryIndex' );
 

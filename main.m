@@ -22,7 +22,7 @@ function varargout = main(varargin)
 
 % Edit the above text to modify the response to help main
 
-% Last Modified by GUIDE v2.5 02-May-2014 20:50:40
+% Last Modified by GUIDE v2.5 03-May-2014 16:57:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1029,6 +1029,10 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
+
+% enable maskToImage
+set( handles.maskToImage, 'enable', 'on' );
+
 end
 
 
@@ -1121,6 +1125,10 @@ elseif isempty(findobj('type','figure','name','manualSegmentation')) == 0
         feval( fhUpdateCurrImgMask, hmanualSegmentation, 1);
     end
 end
+
+% enable maskToImage
+set( handles.maskToImage, 'enable', 'on' );
+
 end
 
 
@@ -1343,7 +1351,46 @@ elseif currView == 3
 end
 end
 
- 
+
+% --- Executes on button press in maskToImage.
+function maskToImage_Callback(hObject, eventdata, handles)
+% hObject    handle to maskToImage (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+masks       = getDataMainGui( 'masks' );
+masksNames  = fieldnames(masks);
+images      = getDataMainGui( 'Images' );
+numImages   = size( images, 3 );
+
+[s,v]       = listdlg( 'PromptString', 'Select the label you want to apply:',...
+                    'SelectionMode','single',...
+                    'ListString', masksNames );
+
+% cancel?
+if v == 0
+    return;
+end
+                
+maskName    = masksNames{s};
+currMask    = masks.( maskName );
+
+% apply mask to image
+for i = numImages:-1:1
+    img              = images(:,:,i);
+    mask             = currMask(:,:,i);
+    img( mask == 0 ) = 0;
+    images(:,:,i)    = img(:,:);
+end
+
+setDataMainGui( 'Images', images );
+updateTraImg( get( handles.sliderTra, 'Value' ), handles );
+updateSagImg( get( handles.sliderSag, 'Value' ), handles );
+updateCorImg( get( handles.sliderCor, 'Value' ), handles );
+
+end
+
+
 function updateLog( methodHistory, view, index )
 
 log     = getDataMainGui( 'log' );
