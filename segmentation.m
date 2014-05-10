@@ -569,12 +569,21 @@ if mHIndex == 0
     return;
 end
 
+% XXX quick bugfix in absence of time
+% the method trimToRect or better setToZero returns a false result if 
+% the current view is not transversal
+currView = get( handles.chooseView, 'Value' );
+set( handles.chooseView, 'Value', 1 );
+
 % apply methodHistory to all images
 for i = numImages:-1:1
     img           = images(:,:,i);
     img           = applyMethods( img, mH, mHIndex, handles );
     images(:,:,i) = img(:,:);
 end
+
+% XXX part of bugfix
+set( handles.chooseView, 'Value', currView );
 
 setDataMainGui( 'Images', images );
 setappdata( handles.segmentation, 'methodHistory'         , {} );
@@ -619,6 +628,8 @@ else                 % coronal
     setappdata(handles.segmentation, 'currView', 'cor');
 end
 
+set(handles.testView, 'xlim', [ 0.5  size(currImg,2)+0.5 ]);
+set(handles.testView, 'ylim', [ 0.5  size(currImg,1)+0.5 ]);
 setappdata(handles.segmentation, 'currImg', currImg);
 applyToView( handles, 0 );
 

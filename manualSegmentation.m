@@ -186,6 +186,9 @@ else                 % coronal
     setappdata(handles.manualSegmentation, 'currView', 'cor');
     
 end
+
+set(handles.testView, 'xlim', [ 0.5  size(currImg,2)+0.5 ]);
+set(handles.testView, 'ylim', [ 0.5  size(currImg,1)+0.5 ]);
 setappdata(handles.manualSegmentation, 'currImg', currImg);
 
 imshowKeepZoom( currImg );

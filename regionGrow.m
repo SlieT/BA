@@ -347,6 +347,8 @@ else                 % coronal
     
 end
 
+set(handles.testView, 'xlim', [ 0.5  size(currImg,2)+0.5 ]);
+set(handles.testView, 'ylim', [ 0.5  size(currImg,1)+0.5 ]);
 setappdata(handles.regionGrow, 'currImgMask', 0 );
 setappdata(handles.regionGrow, 'currImg', currImg);
 applyToView( handles, 0 );

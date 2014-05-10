@@ -386,7 +386,7 @@ if newVal ~= -1
     ogView = getDataMainGui( 'ogView' );
     if strcmp( ogView, 'cor' )
         files = getDataMainGui( 'files' );
-        set( handles.currImage, 'String', files( newVal ).name );
+        set( handles.currImage, 'String', files( get( handles.sliderCor,'Max' ) + 1 - newVal ).name );
     end
     
     % update testView in current figure if figure is live
@@ -648,8 +648,8 @@ imshow( traImg, 'parent', handles.transversal );
 
 
 traSize         = size( traImg );
-traRows         = traSize(1);
-traColumns      = traSize(2);
+traRows         = traSize(2);
+traColumns      = traSize(1);
 
 setDataMainGui( 'lastFolder'    , currentFolder  ); 
 setDataMainGui( 'Images'        , Images         ); % all images
@@ -761,13 +761,26 @@ files       = getDataMainGui( 'files' );
 numImages   = length( files );
 images      = getDataMainGui( 'Images' );
 lastFolder  = getDataMainGui( 'lastFolder' );
+ogView      = getDataMainGui( 'ogView' );
 h           = waitbar(0,'Saving images...');
 
 for i = 1:1:numImages
         fname         = fullfile( dirName, files(i).name );
         lastFName     = fullfile( lastFolder, files(i).name );
         metadata      = dicominfo( lastFName );
-        dicomwrite( images(:,:,i), fname, metadata );
+        if strcmp( ogView, 'tra' )
+            dicomwrite( images(:,:,i), fname, metadata );
+        elseif strcmp( ogView, 'sag' )
+            img(:,:) = images(:,i,:);
+            img = img';
+            img = flipdim(img, 1);
+            dicomwrite( img, fname, metadata );
+        else
+            img(:,:) = images(i,:,:);
+            img = img';
+            img = flipdim(img, 1);
+            dicomwrite( img, fname, metadata );
+        end
         waitbar(i / numImages);
 end
 
@@ -781,7 +794,6 @@ switch ButtonName,
     case 'Yes',
         saveLog();
     case 'No',
-    
 end         
                 
 end
@@ -998,8 +1010,8 @@ elseif strcmp( ogView, 'sag' )
     images(:,sldSag,:) = [];
     files(sldSag)      = [];
 else
-    images(sldCor,:,:) = [];
-    files(sldCor)      = [];
+    images(get( handles.sliderCor,'Max' ) + 1 - sldCor,:,:) = [];
+    files(get( handles.sliderCor,'Max' ) + 1 - sldCor)      = [];
 end
 
 setDataMainGui( 'files', files );
@@ -1114,8 +1126,8 @@ for i = 1:1:sizeNames
 end
 
 dropDownMasks = getDataMainGui( 'dropDownMasks' );
-sizeI   = size( images );
-newMask = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
+sizeI         = size( images );
+newMask       = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
 
 % add to struct
 masks.( name ) = newMask;
@@ -1199,15 +1211,35 @@ if size(masks, 1) > 0
 end
 
 % load images
-numMask       = size(files, 1);
-M             = imread( fullfile( currentFolder, files(1).name ));   % read in first mask
-sizeM         = size( M );
-newMask       = false( sizeM( 1 ), sizeM( 2 ), numMask );
+numMask     = size(files, 1);
+Images      = getDataMainGui( 'Images' );
+sizeI       = size( Images );
+newMask     = false( sizeI( 1 ), sizeI( 2 ), sizeI( 3 ) );
+ogView      = getDataMainGui( 'ogView' );
+h       	= waitbar(0,'Loading label...');
 
-h = waitbar(0,'Loading label...');
 for i = 1:1:numMask
     fname          = fullfile( currentFolder, files(i).name );
-    newMask(:,:,i) = imread( fname );
+    % newMask(:,:,i) = imread( fname );
+    
+    if strcmp( ogView, 'tra' )
+        newMask(:,:,i) = imread( fname );
+            
+	elseif strcmp( ogView, 'sag' )
+        newMask(:,i,:) = imread( fname );
+        x(:,:) = newMask(:,i,:);
+      	x = x';
+        x = flipdim(x, 2);
+      	newMask(:,i,:) = x;
+        
+    else
+        newMask(i,:,:) = imread( fname );
+        x(:,:) = newMask(i,:,:);
+      	x = x';
+        x = flipdim(x, 2);
+      	newMask(i,:,:) = x;
+  	end
+    
     waitbar(i / numMask);
 end
 close( h );
@@ -1276,9 +1308,17 @@ if v == 0
     return;
 end
 
+ogView   	= getDataMainGui( 'ogView' );
 maskName    = masksNames{s};
 currMask    = masks.( maskName );
-sizeMask    = size(currMask, 3);
+
+if strcmp( ogView, 'tra' )
+    sizeMask    = size(currMask, 3);
+elseif strcmp( ogView, 'sag' )
+    sizeMask    = size(currMask, 2);
+else
+    sizeMask    = size(currMask, 1);
+end
 
 dirName = uigetdir();
 
@@ -1293,11 +1333,29 @@ numOfDezimal        = floor( log10(sizeMask) ) + 1;
 numOfDezimalFormat  = strcat( '%0', num2str(numOfDezimal), 'd' );
 
 % save to disk
+
 h = waitbar(0,'Saving label...');
+
 for i = 1:1:sizeMask
         addOn = strcat( maskName, '_', num2str(i, numOfDezimalFormat), '.png' );
         fname = fullfile( dirName, addOn );
-        imwrite( currMask(:,:,i), fname, 'png' ); 
+        
+        if strcmp( ogView, 'tra' )
+            imwrite( currMask(:,:,i), fname, 'png' ); 
+        
+        elseif strcmp( ogView, 'sag' )
+            x(:,:) = currMask(:,i,:);
+            x = x';
+            x = flipdim(x, 1);
+            imwrite( x, fname, 'png' );
+            
+        elseif strcmp( ogView, 'cor' )
+            x(:,:) = currMask(i,:,:);
+            x = x';
+            x = flipdim(x, 1);
+            imwrite( x, fname, 'png' );
+        end
+            
         waitbar(i / sizeMask);
 end
 close( h );

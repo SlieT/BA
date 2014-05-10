@@ -282,7 +282,7 @@ if applyMethod == 0
     
     % apply previous methods
     testImg = applyMethods( testImg, mH, mHIndex );
- 
+    
     imshowKeepZoom( testImg );     
     setappdata(handles.enhanceContrast, 'currTestImg', testImg );
     return
@@ -550,6 +550,8 @@ else                 % coronal
     setappdata(handles.enhanceContrast, 'currView', 'cor');
 end
 
+set(handles.testView, 'xlim', [ 0.5  size(currImg,2)+0.5 ]);
+set(handles.testView, 'ylim', [ 0.5  size(currImg,1)+0.5 ]);
 setappdata(handles.enhanceContrast, 'currImg', currImg);
 applyToView( handles, 0 );
 end
