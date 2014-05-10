@@ -182,7 +182,7 @@ if getDataMainGui( 'showLines' )
     lineWidth       = getDataMainGui( 'lineWidth' );
     startPointXSag  = get( handles.sliderSag, 'Value' );
     endPointYSag    = size( getDataMainGui( 'currTraImg' ), 1 );
-    endpointXCor    = size( getDataMainGui( 'currTraImg' ), 1 );
+    endpointXCor    = size( getDataMainGui( 'currTraImg' ), 2 );
     startpointYCor  = get( handles.sliderCor, 'Max' )+1 - get( handles.sliderCor, 'Value' );
     
     % draw the sagittal and coronal line
@@ -219,9 +219,12 @@ if newVal ~= -1
     setDataMainGui( 'currTraImg', image );
     
     % set new static text
-    files = getDataMainGui( 'files' );
-    set( handles.currImage, 'String', files( newVal ).name );
-    
+    ogView = getDataMainGui( 'ogView' );
+    if strcmp( ogView, 'tra' )
+        files = getDataMainGui( 'files' );
+        set( handles.currImage, 'String', files( newVal ).name );
+    end
+        
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
@@ -295,6 +298,13 @@ end
 if newVal ~= -1
     setDataMainGui( 'currSagImg', image );
     
+    % set new static text
+    ogView = getDataMainGui( 'ogView' );
+    if strcmp( ogView, 'sag' )
+        files = getDataMainGui( 'files' );
+        set( handles.currImage, 'String', files( newVal ).name );
+    end
+    
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
             || isempty(findobj('type','figure','name','enhanceContrast')) == 0 ...
@@ -339,7 +349,12 @@ if getDataMainGui( 'showLines' )
     % draw the transversal and sagittal line
     hold on;
     % draw tra line
-    line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
+    ogView = getDataMainGui( 'ogView' );
+    if strcmp( ogView, 'tra' )
+        line([0, endPointXTra], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
+    else
+    	line([0, endPointYSag], [startPointYTra, startPointYTra], 'Color', 'r', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
+    end
     
     % draw sag line
     line([startPointXSag, startPointXSag], [0, endPointYSag], 'Color', 'g', 'LineWidth', lineWidth, 'HitTest', 'off', 'parent', handles.coronal );
@@ -366,6 +381,13 @@ end
 % update data
 if newVal ~= -1
     setDataMainGui( 'currCorImg', image );
+    
+    % set new static text
+    ogView = getDataMainGui( 'ogView' );
+    if strcmp( ogView, 'cor' )
+        files = getDataMainGui( 'files' );
+        set( handles.currImage, 'String', files( newVal ).name );
+    end
     
     % update testView in current figure if figure is live
     if isempty(findobj('type','figure','name','segmentation')) == 0 ... % == 0 means "no its not empty"
@@ -480,24 +502,48 @@ end
 
 files     = dir( fullfile( currentFolder, '*.dcm' ));       % build struct of all dcm-Images in this folder   
 
-
 % update the static text
 set( handles.currFolder, 'String', currentFolder );   
-
 
 if isempty( files )                                         % contains any images?
     set( handles.currImage, 'String', 'Folder didn''t cointain any .dcm images.' );
     return;
 end
 
+% Whats the view of the input images?
+ogView = questdlg('View of the images?', ...
+	'View of images', ...
+	'Transversal','Sagittal','Coronal','Transversal');
+
+switch ogView
+    case 'Transversal'
+        ogView = 'tra';
+    case 'Sagittal'
+        ogView = 'sag';
+    case 'Coronal'
+        ogView = 'cor';
+end
 
 % gather some Image information
 I         = dicomread( fullfile( currentFolder, files(1).name ));   % read in first image
 classI    = class( I );
 sizeI     = size( I );
 numImages = length( files );
-Images    = zeros( sizeI( 1 ), sizeI( 2 ), numImages, classI );
+
+% create "Images" accordingly to the view
+if strcmp( ogView, 'tra' )
+    Images = zeros( sizeI( 1 ), sizeI( 2 ), numImages, classI );
+    
+elseif strcmp( ogView, 'sag' )
+    Images = zeros( sizeI( 1 ), numImages, sizeI( 2 ), classI );
+    
+else
+    Images = zeros( numImages, sizeI( 1 ), sizeI( 2 ), classI );
+    
+end
+
 maxNumber = intmax( classI );
+
 
 
 % read all images if folderpath changed
@@ -505,7 +551,23 @@ if strcmp( currentFolder, handles.lastFolder ) == false
     h = waitbar(0,'Reading images...');
     for i = 1:1:numImages
         fname         = fullfile( currentFolder, files(i).name );
-        Images(:,:,i) = dicomread( fname );
+        
+        if strcmp( ogView, 'tra' )
+        	Images(:,:,i) = dicomread( fname );
+            
+        elseif strcmp( ogView, 'sag' )
+            Images(:,i,:) = dicomread( fname );
+            x(:,:) = Images(:,i,:);
+            x = x';     % transponse 
+            Images(:,i,:) = x;
+        
+        else
+            Images(i,:,:) = dicomread( fname );
+            x(:,:) = Images(i,:,:);
+            x = x';
+            Images(i,:,:) = x;
+        end
+        
         waitbar(i / numImages);
     end
     close( h );
@@ -513,48 +575,67 @@ else
     return;
 end
 
+% flip the order of the images upside down
+if strcmp( ogView, 'sag' ) || strcmp( ogView, 'cor' )
+    Images = flipdim( Images, 3 );
+end
+
+numTraImages    = size(Images, 3);
 Isize           = size(Images);
 amountRows      = Isize(1);
 amountColumns   = Isize(2);
-firstImg        = round( numImages/2 ); 
-halfC           = amountColumns / 2;            % start in the middle otherwise sagittal and coronal would properbly show nothing
-halfR           = amountRows / 2;
+halfImgs        = round( numTraImages / 2 );
+halfC           = round( amountColumns / 2 );	% start in the middle otherwise sagittal and coronal would properbly show nothing
+halfR           = round( amountRows / 2 );
+
+% set first img
+if strcmp( ogView, 'tra' )
+    firstImg = halfImgs;
+elseif strcmp( ogView, 'sag' )
+    firstImg = halfC;
+else
+    firstImg = halfR;
+end
 
 % enhance the contrast of all images?
 label           = get( hObject, 'Label' );
 if strcmp( label, 'Load')
-    enhanceImg  = Images(:,:,firstImg);
+    if strcmp( ogView, 'tra' )
+        enhanceImg  = Images(:,:,firstImg);
+    elseif strcmp( ogView, 'sag' )
+        enhanceImg  = Images(:,firstImg,:);
+    else
+        enhanceImg  = Images(firstImg,:,:);
+    end
     u           = double(min(enhanceImg(:))) / double(maxNumber);
     o           = double(max(enhanceImg(:))) / double(maxNumber);
-    for i = 1:1:numImages
+    for i = 1:1:numTraImages
         enhanceImg = Images(:,:,i); 
         enhanceImg = imadjust( enhanceImg, [ u o ], [ 0 1 ] );
         Images(:,:,i) = enhanceImg;
     end
 end
 
-% set sliders
-sliderStep = 1 / numImages;
-
 set( handles.sliderTra, 'visible'   , 'on' );
 set( handles.sliderSag, 'visible'   , 'on' );
 set( handles.sliderCor, 'visible'   , 'on' );
 
 set( handles.currImage, 'String'    , files(firstImg).name );
+sliderStep = 1 / numTraImages;
 set( handles.sliderTra, 'Min'       , 1 );
-set( handles.sliderTra, 'Max'       , numImages );      % 0 to numImages-1 equals amount of images
+set( handles.sliderTra, 'Max'       , numTraImages );      % 0 to numImages-1 equals amount of images
 set( handles.sliderTra, 'SliderStep', [ sliderStep sliderStep ] );
-set( handles.sliderTra, 'Value'     , firstImg );
+set( handles.sliderTra, 'Value'     , halfImgs );
 sliderStep = 1 / amountColumns;                         % update sliderStep
 set( handles.sliderSag, 'Min'       , 1 );
 set( handles.sliderSag, 'Max'       , amountColumns );
 set( handles.sliderSag, 'SliderStep', [ sliderStep sliderStep ] );
 set( handles.sliderSag, 'Value'     , halfC );
+sliderStep = 1 / amountRows; 
 set( handles.sliderCor, 'Min'       , 1 );
 set( handles.sliderCor, 'Max'       , amountRows );     % use amountColumns for the rows because the images are square
 set( handles.sliderCor, 'SliderStep', [ sliderStep sliderStep ] );
 set( handles.sliderCor, 'Value'     , halfR );          % same for half
-
 
 % display the first image
 flip            = -1;               % flip upside down
@@ -562,7 +643,7 @@ scale           = 1;                % scale factor
 %%%               % starting from the bottom
 lineWidth       = 1;
 % transversal
-traImg          = Images(:,:,firstImg);
+traImg          = Images(:,:,halfImgs);
 imshow( traImg, 'parent', handles.transversal );    
 
 
@@ -570,14 +651,14 @@ traSize         = size( traImg );
 traRows         = traSize(1);
 traColumns      = traSize(2);
 
-
 setDataMainGui( 'lastFolder'    , currentFolder  ); 
 setDataMainGui( 'Images'        , Images         ); % all images
+setDataMainGui( 'ogView'        , ogView         ); 
 setDataMainGui( 'maxNumber'     , maxNumber      ); % greatest possible number as pixelvalue for the current image(class)
 
 log                     = {};
 logAll{ 1 }             = [];
-logTra{ numImages }     = [];
+logTra{ numTraImages }     = [];
 logSag{ amountColumns } = [];
 logCor{ amountRows }    = [];
 setDataMainGui( 'log'           , log           );
@@ -619,8 +700,8 @@ setDataMainGui( 'corRows'       , corRows       );
 setDataMainGui( 'corColumns'    , corColumns    );
 setDataMainGui( 'currCorImg'    , corImgNew     );
 
-ratioTransSag   = sagRows / numImages;
-ratioTransCor   = corRows / numImages; 
+ratioTransSag   = sagRows / numTraImages;
+ratioTransCor   = corRows / numTraImages; 
 ratioSagCor     = corColumns / sagColumns;
 ratioCorSag     = sagColumns / corColumns;
 setDataMainGui( 'ratioTransSag' , ratioTransSag );
@@ -890,21 +971,36 @@ files    = getDataMainGui( 'files' );  % struct
 sldTra   = get( handles.sliderTra, 'Value' );
 sldSag   = get( handles.sliderSag, 'Value' );
 sldCor   = get( handles.sliderCor, 'Value' );
+ogView   = getDataMainGui( 'ogView' );
 
 % check if at least 2 images are available
-sizeImages = size( images );
-if numel(sizeImages) == 2
-    set( handles.sliderTra, 'Max', 1 );
-    warndlg( 'Only one image left - can''t delete.', 'Deletionwarning' );
+
+if size(files, 1) == 1   
+    if strcmp( ogView, 'tra' )
+        set( handles.sliderTra, 'Max', 1 );
+    elseif strcmp( ogView, 'sag' )
+        set( handles.sliderSag, 'Max', 1 );
+    else
+        set( handles.sliderCor, 'Max', 1 );
+    end
+    
+    warndlg( 'Only one image left - can''t delete.', 'Delete warning' );
     
     return;
 end
 
-% delete image
-images(:,:,sldTra) = [];
+% delete image and file
+if strcmp( ogView, 'tra' )
+    images(:,:,sldTra) = [];
+    files(sldTra)      = [];
 
-% delete file
-files(sldTra) = [];
+elseif strcmp( ogView, 'sag' )
+    images(:,sldSag,:) = [];
+    files(sldSag)      = [];
+else
+    images(sldCor,:,:) = [];
+    files(sldCor)      = [];
+end
 
 setDataMainGui( 'files', files );
 setDataMainGui( 'Images', images );
@@ -914,25 +1010,49 @@ sizeImages = size( images );
 if numel(sizeImages) == 2
     numImages = 1;
 else
-    sizeImages  = size( images );
-    numImages   = sizeImages(3);
+    if strcmp( ogView, 'tra' )
+        numImages = sizeImages(3);
+    elseif strcmp( ogView, 'sag' )
+        numImages = sizeImages(2);
+    else
+        numImages = sizeImages(1);
+    end
 end
 
 sliderStep  = 1 / numImages;
 
-% current sliderValue greater number of images (has been reduced)
-if sldTra > numImages
-    sldTra = numImages;
+
+if strcmp( ogView, 'tra' )
+    % current sliderValue greater number of images (has been reduced)
+    if sldTra > numImages
+        sldTra = numImages;
+    end
+    set( handles.sliderTra, 'Max', numImages );
+    set( handles.sliderTra, 'SliderStep', [ sliderStep sliderStep ] );
+    % update currImage text
+    set( handles.currImage, 'String', files(sldTra).name );
+
+elseif strcmp( ogView, 'sag' )
+    if sldSag > numImages
+        sldSag = numImages;
+    end
+    set( handles.sliderSag, 'Max', numImages );
+    set( handles.sliderSag, 'SliderStep', [ sliderStep sliderStep ] );
+    set( handles.currImage, 'String', files(sldSag).name );
+
+else
+    if sldCor > numImages
+        sldCor = numImages;
+    end
+    set( handles.sliderCor, 'Max', numImages );
+    set( handles.sliderCor, 'SliderStep', [ sliderStep sliderStep ] );
+    set( handles.currImage, 'String', files(sldCor).name );
+    
 end
 
-set( handles.sliderTra, 'Max', numImages );
-set( handles.sliderTra, 'SliderStep', [ sliderStep sliderStep ] );
 set( handles.sliderTra, 'Value', sldTra );
 set( handles.sliderSag, 'Value', sldSag );
 set( handles.sliderCor, 'Value', sldCor );
-
-% update currImage text
-set( handles.currImage, 'String', files(sldTra).name );
 
 updateTraImg( sldTra, handles );
 updateSagImg( sldSag, handles );
