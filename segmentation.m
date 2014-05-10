@@ -490,6 +490,7 @@ if currMethod == 3
                 images(currIndex,i,j) = currTestImgRoi(sizeJ+1 - j, i);
             end
         end
+        currIndex      = get( hMain.sliderCor, 'Value' );
     end
     
     set( handles.undo, 'enable', 'off' );
@@ -526,7 +527,8 @@ else
             for j=1:1:sizeJ
                 images(currIndex,i,j) = currTestImg(sizeJ+1 - j, i);
             end
-        end 
+        end
+        currIndex      = get( hMain.sliderCor, 'Value' );
     end
 end
 

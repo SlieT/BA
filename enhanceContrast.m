@@ -455,7 +455,7 @@ else                 % coronal
             images(currIndex,i,j) = currTestImg(sizeJ+1 - j, i);
         end
     end
-        
+    currIndex = get( hMain.sliderCor, 'Value' );
 end
 
 setDataMainGui( 'Images', images );
