@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 25-Apr-2014 12:30:40
+% Last Modified by GUIDE v2.5 11-May-2014 18:00:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -722,5 +722,41 @@ if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
     set( hObject, 'string', 'Mark single pixels to invert their label-value. Mark a region to add/delete all pixels within. Use normal button clicks to add points. A shift-, right-, or double-click adds a final point and ends the selection. Pressing Return or Enter ends the selection without adding a final point. Pressing Backspace or Delete removes the previously selected point.' ); 
 else
     set( hObject, 'string', 'Click me to get more informations.' );
+end
+end
+
+
+% --- Executes on key press with focus on manualSegmentation and none of its controls.
+function manualSegmentation_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to manualSegmentation (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp( eventdata.Key, 'alt' )
+   isSet = get( handles.showMask, 'Value' );
+   isSet = ~isSet;
+   set( handles.showMask, 'Value', isSet );
+   showMask( handles, isSet );
+end
+end
+
+
+% --- Executes on key release with focus on manualSegmentation and none of its controls.
+function manualSegmentation_KeyReleaseFcn(hObject, eventdata, handles)
+% hObject    handle to manualSegmentation (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	Key: name of the key that was released, in lower case
+%	Character: character interpretation of the key(s) that was released
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) released
+% handles    structure with handles and user data (see GUIDATA)
+
+if strcmp( eventdata.Key, 'alt' )
+   isSet = get( handles.showMask, 'Value' );
+   isSet = ~isSet;
+   set( handles.showMask, 'Value', isSet );
+   showMask( handles, isSet );
 end
 end
