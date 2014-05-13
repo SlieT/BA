@@ -56,9 +56,6 @@ function main_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for main
 handles.output = hObject;
 
-% own variables
-handles.lastFolder = '';    % contains the last Folder path
-
 % save a reference to the main gui
 setappdata(0, 'hMainGui', hObject);
 
@@ -500,10 +497,7 @@ if currentFolder == 0                                       % dialogCancel?
     return;
 end
 
-files     = dir( fullfile( currentFolder, '*.dcm' ));       % build struct of all dcm-Images in this folder   
-
-% update the static text
-set( handles.currFolder, 'String', currentFolder );   
+files     = dir( fullfile( currentFolder, '*.dcm' ));       % build struct of all dcm-Images in this folder     
 
 if isempty( files )                                         % contains any images?
     set( handles.currImage, 'String', 'Folder didn''t cointain any .dcm images.' );
@@ -544,36 +538,30 @@ end
 
 maxNumber = intmax( classI );
 
-
-
-% read all images if folderpath changed
-if strcmp( currentFolder, handles.lastFolder ) == false
-    h = waitbar(0,'Reading images...');
-    for i = 1:1:numImages
-        fname         = fullfile( currentFolder, files(i).name );
+% read all images
+h = waitbar(0,'Reading images...');
+for i = 1:1:numImages
+    fname = fullfile( currentFolder, files(i).name );
         
-        if strcmp( ogView, 'tra' )
-        	Images(:,:,i) = dicomread( fname );
+    if strcmp( ogView, 'tra' )
+        Images(:,:,i) = dicomread( fname );
             
-        elseif strcmp( ogView, 'sag' )
-            Images(:,i,:) = dicomread( fname );
-            x(:,:) = Images(:,i,:);
-            x = x';     % transponse 
-            Images(:,i,:) = x;
+    elseif strcmp( ogView, 'sag' )
+        Images(:,i,:) = dicomread( fname );
+        x(:,:) = Images(:,i,:);
+        x = x';     % transponse 
+        Images(:,i,:) = x;
         
-        else
-            Images(i,:,:) = dicomread( fname );
-            x(:,:) = Images(i,:,:);
-            x = x';
-            Images(i,:,:) = x;
-        end
-        
-        waitbar(i / numImages);
+    else
+        Images(i,:,:) = dicomread( fname );
+        x(:,:) = Images(i,:,:);
+        x = x';
+        Images(i,:,:) = x;
     end
-    close( h );
-else
-    return;
+        
+    waitbar(i / numImages);
 end
+close( h );
 
 % flip the order of the images upside down
 if strcmp( ogView, 'sag' ) || strcmp( ogView, 'cor' )
@@ -615,6 +603,12 @@ if strcmp( label, 'Load')
         Images(:,:,i) = enhanceImg;
     end
 end
+
+
+% update the static text
+staticCurrentFolder = strrep( currentFolder, pwd, '' );           % replace the pwd with an empty string
+staticCurrentFolder = strcat( '...', staticCurrentFolder );
+set( handles.currFolder, 'String', staticCurrentFolder ); 
 
 set( handles.sliderTra, 'visible'   , 'on' );
 set( handles.sliderSag, 'visible'   , 'on' );
