@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 11-May-2014 18:00:19
+% Last Modified by GUIDE v2.5 14-May-2014 17:35:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -727,7 +727,7 @@ end
 
 
 % --- Executes on key press with focus on manualSegmentation and none of its controls.
-function manualSegmentation_KeyPressFcn(hObject, eventdata, handles)
+function manualSegmentation_WindowKeyPressFcn(hObject, eventdata, handles)
 % hObject    handle to manualSegmentation (see GCBO)
 % eventdata  structure with the following fields (see FIGURE)
 %	Key: name of the key that was pressed, in lower case
@@ -745,7 +745,7 @@ end
 
 
 % --- Executes on key release with focus on manualSegmentation and none of its controls.
-function manualSegmentation_KeyReleaseFcn(hObject, eventdata, handles)
+function manualSegmentation_WindowKeyReleaseFcn(hObject, eventdata, handles)
 % hObject    handle to manualSegmentation (see GCBO)
 % eventdata  structure with the following fields (see FIGURE)
 %	Key: name of the key that was released, in lower case
@@ -758,5 +758,23 @@ if strcmp( eventdata.Key, 'alt' )
    isSet = ~isSet;
    set( handles.showMask, 'Value', isSet );
    showMask( handles, isSet );
+end
+end
+
+
+% --- Executes on scroll wheel click while the figure is in focus.
+function manualSegmentation_WindowScrollWheelFcn(hObject, eventdata, handles)
+% hObject    handle to manualSegmentation (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	VerticalScrollCount: signed integer indicating direction and number of clicks
+%	VerticalScrollAmount: number of lines scrolled for each click
+% handles    structure with handles and user data (see GUIDATA)
+
+if eventdata.VerticalScrollCount > 0
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, false );
+else
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, true );
 end
 end

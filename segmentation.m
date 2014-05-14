@@ -22,7 +22,7 @@ function varargout = segmentation(varargin)
 
 % Edit the above text to modify the response to help segmentation
 
-% Last Modified by GUIDE v2.5 19-Apr-2014 14:38:19
+% Last Modified by GUIDE v2.5 14-May-2014 17:50:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1001,4 +1001,22 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end
+
+
+% --- Executes on scroll wheel click while the figure is in focus.
+function segmentation_WindowScrollWheelFcn(hObject, eventdata, handles)
+% hObject    handle to segmentation (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	VerticalScrollCount: signed integer indicating direction and number of clicks
+%	VerticalScrollAmount: number of lines scrolled for each click
+% handles    structure with handles and user data (see GUIDATA)
+
+if eventdata.VerticalScrollCount > 0
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, false );
+else
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, true );
+end
 end

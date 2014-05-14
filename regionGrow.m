@@ -22,7 +22,7 @@ function varargout = regionGrow(varargin)
 
 % Edit the above text to modify the response to help regionGrow
 
-% Last Modified by GUIDE v2.5 25-Apr-2014 12:24:05
+% Last Modified by GUIDE v2.5 14-May-2014 17:51:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -928,5 +928,23 @@ if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
     set( hObject, 'string', 'Seeds(red) are the starting point for the "region grow"(green) algorithm whereas the threshold decides which pixels are added to the growing reagion. Blue shows the "old/current" label while the overlapped parts are colored teal.' ); 
 else
     set( hObject, 'string', 'Click me to get more informations.' );
+end
+end
+
+
+% --- Executes on scroll wheel click while the figure is in focus.
+function regionGrow_WindowScrollWheelFcn(hObject, eventdata, handles)
+% hObject    handle to regionGrow (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	VerticalScrollCount: signed integer indicating direction and number of clicks
+%	VerticalScrollAmount: number of lines scrolled for each click
+% handles    structure with handles and user data (see GUIDATA)
+
+if eventdata.VerticalScrollCount > 0
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, false );
+else
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, true );
 end
 end

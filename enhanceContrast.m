@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 19-Apr-2014 01:09:52
+% Last Modified by GUIDE v2.5 14-May-2014 17:50:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -842,4 +842,22 @@ function down_Callback(hObject, eventdata, handles)
 
 fhUpDown = getDataMainGui( 'fhUpDown' );
 feval( fhUpDown, handles, false );
+end
+
+
+% --- Executes on scroll wheel click while the figure is in focus.
+function enhanceContrast_WindowScrollWheelFcn(hObject, eventdata, handles)
+% hObject    handle to enhanceContrast (see GCBO)
+% eventdata  structure with the following fields (see FIGURE)
+%	VerticalScrollCount: signed integer indicating direction and number of clicks
+%	VerticalScrollAmount: number of lines scrolled for each click
+% handles    structure with handles and user data (see GUIDATA)
+
+if eventdata.VerticalScrollCount > 0
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, false );
+else
+    fhUpDown = getDataMainGui( 'fhUpDown' );
+    feval( fhUpDown, handles, true );
+end
 end
