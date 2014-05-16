@@ -22,7 +22,7 @@ function varargout = regionGrow(varargin)
 
 % Edit the above text to modify the response to help regionGrow
 
-% Last Modified by GUIDE v2.5 14-May-2014 17:51:20
+% Last Modified by GUIDE v2.5 16-May-2014 20:48:55
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -496,6 +496,18 @@ end
 end
 
 
+% --- Executes on button press in createMask.
+function createMask_Callback(hObject, eventdata, handles)
+% hObject    handle to createMask (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhMenuMaskCreate = getDataMainGui( 'fhMenuMaskCreate' );
+hMain            = getDataMainGui( 'handles' );
+feval( fhMenuMaskCreate, hMain);
+end
+
+
 % --- Executes on selection change in chooseMask.
 function chooseMask_Callback(hObject, eventdata, handles)
 % hObject    handle to chooseMask (see GCBO)
@@ -631,7 +643,7 @@ if currMethod == 1      % New/Renew Mask
     
     imshowKeepZoom( colorMask );
 
-elseif currMethod == 2  % New/Renew Mask (show seeded mask)
+elseif currMethod == 2  % New/Renew Mask (show current mask only)
     if isTrans
         colorMask           = cat(3, zeros(size(img)), currImgMask, zeros(size(img)));
     else
@@ -779,6 +791,12 @@ else                 % coronal
 end
 
 setappdata(handles.regionGrow, 'currMask', currMask );
+
+% update labelChanged struct
+currLabel    = get( handles.chooseMask, 'Value' );
+labelChanged = getDataMainGui( 'labelChanged' );
+labelChanged{ currLabel } = 1;
+setDataMainGui( 'labelChanged', labelChanged );
 
 % show the current img with the current default mask
 currDefaultMask = getCurrDefaultMask( handles );

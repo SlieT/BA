@@ -461,6 +461,7 @@ end
 setDataMainGui( 'Images', images );
 setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
+setDataMainGui( 'imgChanged', 1 );
 
 % update hMain
 hMain          = getDataMainGui( 'handles' );
@@ -480,6 +481,7 @@ set( handles.undo, 'enable', 'off' );
 % update Log
 fhUpdateLog = getDataMainGui( 'fhUpdateLog' );
 feval( fhUpdateLog, mH, logView, currIndex );
+
 end
 
 
@@ -509,6 +511,7 @@ end
 setDataMainGui( 'Images', images );
 setappdata(handles.enhanceContrast, 'methodHistory'         , {} );
 setappdata(handles.enhanceContrast, 'methodHistoryIndex'    , 0 );
+setDataMainGui( 'imgChanged', 1 );
 
 % update hMain
 hMain        = getDataMainGui( 'handles' );

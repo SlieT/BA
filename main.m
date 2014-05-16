@@ -97,6 +97,37 @@ function main_CloseRequestFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+imgChanged   = getDataMainGui( 'imgChanged' );
+labelChanged = getDataMainGui( 'labelChanged' );
+
+if imgChanged == 1
+    choice = questdlg('Manipulated images haven''t been saved yet, are you sure you want to quit?', ...
+                        'Unsaved Progress', ...
+                        'Yes','No','No');
+    switch choice
+        case 'No'
+            return;
+    end 
+end
+
+for i=1:1:size(labelChanged,2)
+    label = labelChanged{i};
+    
+    % if label was created or loaded but not used its [] and the size is 0
+    if size(label,1) > 0
+        % if the label has been used but not saved
+        if label == 1
+            choice = questdlg('Manipulated label hasn''t been saved yet, are you sure you want to quit?', ...
+                                'Unsaved Progress', ...
+                                'Yes','No','No');
+            switch choice
+                case 'No'
+                    return;
+            end 
+        end
+    end
+end
+
 % if any figure is live close it
 if isempty(findobj('type','figure','name','enhanceContrast')) == 0
     henh = getDataMainGui( 'henhanceContrast' );
@@ -649,6 +680,8 @@ setDataMainGui( 'lastFolder'    , currentFolder  );
 setDataMainGui( 'Images'        , Images         ); % all images
 setDataMainGui( 'ogView'        , ogView         ); 
 setDataMainGui( 'maxNumber'     , maxNumber      ); % greatest possible number as pixelvalue for the current image(class)
+setDataMainGui( 'imgChanged'    , 0              );
+setDataMainGui( 'labelChanged'  , {}             );
 
 log                     = {};
 logAll{ 1 }             = [];
@@ -703,14 +736,15 @@ setDataMainGui( 'ratioTransCor' , ratioTransCor );
 setDataMainGui( 'ratioSagCor'   , ratioSagCor   );
 setDataMainGui( 'ratioCorSag'   , ratioCorSag   );
 
-setDataMainGui( 'fhUpdateTraImg', @updateTraImg );
-setDataMainGui( 'fhUpdateSagImg', @updateSagImg );
-setDataMainGui( 'fhUpdateCorImg', @updateCorImg );
-setDataMainGui( 'fhGetSagImg'   , @getSagImg    );
-setDataMainGui( 'fhGetCorImg'   , @getCorImg    );
-setDataMainGui( 'fhUpDown'      , @upDown       );
-setDataMainGui( 'fhUpdateLog'   , @updateLog    );
-setDataMainGui( 'handles'       , handles       );
+setDataMainGui( 'fhMenuMaskCreate'  , @menuMaskCreate );
+setDataMainGui( 'fhUpdateTraImg'    , @updateTraImg );
+setDataMainGui( 'fhUpdateSagImg'    , @updateSagImg );
+setDataMainGui( 'fhUpdateCorImg'    , @updateCorImg );
+setDataMainGui( 'fhGetSagImg'       , @getSagImg    );
+setDataMainGui( 'fhGetCorImg'       , @getCorImg    );
+setDataMainGui( 'fhUpDown'          , @upDown       );
+setDataMainGui( 'fhUpdateLog'       , @updateLog    );
+setDataMainGui( 'handles'           , handles       );
 
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
@@ -779,6 +813,8 @@ for i = 1:1:numImages
 end
 
 close( h );
+
+setDataMainGui( 'imgChanged', 0 );
 
 % save Log?
 ButtonName = questdlg( 'Also save a logfile?', ...
@@ -1073,12 +1109,7 @@ function menuMask_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 end
 
-
-% --------------------------------------------------------------------
-function menuMaskCreate_Callback(hObject, eventdata, handles)
-% hObject    handle to menuMaskCreate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function menuMaskCreate( handles )
 
 % if no images loaded
 images  = getDataMainGui( 'Images' );
@@ -1158,6 +1189,16 @@ end
 
 % enable maskToImage
 set( handles.maskToImage, 'enable', 'on' );
+
+end
+
+% --------------------------------------------------------------------
+function menuMaskCreate_Callback(hObject, eventdata, handles)
+% hObject    handle to menuMaskCreate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+menuMaskCreate( handles );
 
 end
 
@@ -1355,6 +1396,12 @@ end
 close( h );
 
 msgbox( 'Label successfully stored.','Save success');
+
+% update labelChanged struct
+labelChanged = getDataMainGui( 'labelChanged' );
+labelChanged{ s } = 0;
+setDataMainGui( 'labelChanged', labelChanged );
+
 end
 
 
@@ -1534,6 +1581,8 @@ masks       = getDataMainGui( 'masks' );
 masksNames  = fieldnames(masks);
 images      = getDataMainGui( 'Images' );
 numImages   = size( images, 3 );
+
+uiwait(warndlg( 'Choose a label which will then be applied upon the images. This can''t be undone!', 'Attention' ));
 
 [s,v]       = listdlg( 'PromptString', 'Select the label you want to apply:',...
                     'SelectionMode','single',...
@@ -1811,7 +1860,7 @@ elseif strcmp( name, 'log' )
 elseif strcmp( name, 'stretch' )
     E = cell{1}{2};
     m = cell{1}{3};
-    newCell{1} = { 'Contrast-stretching transformation  ', num2str( E ), num2str( m ) };
+    newCell{1} = { 'Contrast-stretching transformation  ', num2str( m ), num2str( E ) };
     
 % segmentation
 

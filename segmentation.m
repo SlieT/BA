@@ -431,6 +431,7 @@ function applyToView_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+%XXX the button "preview" is hidden beneath the newCircle button
 applyToView( handles, 1 );
 end
 
@@ -533,6 +534,7 @@ else
 end
 
 setDataMainGui( 'Images', images );
+setDataMainGui( 'imgChanged', 1 );
    
 % update hMain
 hMain          = getDataMainGui( 'handles' );
@@ -590,6 +592,7 @@ set( handles.chooseView, 'Value', currView );
 setDataMainGui( 'Images', images );
 setappdata( handles.segmentation, 'methodHistory'         , {} );
 setappdata( handles.segmentation, 'methodHistoryIndex'    , 0 );
+setDataMainGui( 'imgChanged', 1 );
    
 % update hMain
 hMain          = getDataMainGui( 'handles' );

@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 14-May-2014 17:35:02
+% Last Modified by GUIDE v2.5 16-May-2014 21:03:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -231,6 +231,18 @@ if strcmp(currView,view)
     
     updateCurrImgMask( handles, 1 );
 end
+end
+
+
+% --- Executes on button press in createMask.
+function createMask_Callback(hObject, eventdata, handles)
+% hObject    handle to createMask (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+fhMenuMaskCreate = getDataMainGui( 'fhMenuMaskCreate' );
+hMain            = getDataMainGui( 'handles' );
+feval( fhMenuMaskCreate, hMain);
 end
 
 
@@ -503,6 +515,12 @@ end
 
 setappdata( handles.manualSegmentation, 'currImgMask', currImgMask );
 
+% update labelChanged struct
+currLabel    = get( handles.chooseMask, 'Value' );
+labelChanged = getDataMainGui( 'labelChanged' );
+labelChanged{ currLabel } = 1;
+setDataMainGui( 'labelChanged', labelChanged );
+
 updateCurrMask( handles );
 
 % redraw image and new mask
@@ -613,6 +631,12 @@ if roi == 0
     
     setappdata(handles.manualSegmentation, 'currImgMask', currImgMask );
     setappdata(handles.manualSegmentation, 'roi', 0 );
+    
+    % update labelChanged struct
+    currLabel    = get( handles.chooseMask, 'Value' );
+    labelChanged = getDataMainGui( 'labelChanged' );
+    labelChanged{ currLabel } = 1;
+    setDataMainGui( 'labelChanged', labelChanged );
     
     updateCurrMask( handles );
     isSet = get(handles.showMask,'Value');
