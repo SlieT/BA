@@ -22,7 +22,7 @@ function varargout = manualSegmentation(varargin)
 
 % Edit the above text to modify the response to help manualSegmentation
 
-% Last Modified by GUIDE v2.5 16-May-2014 21:03:19
+% Last Modified by GUIDE v2.5 18-May-2014 12:17:46
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -565,40 +565,36 @@ end
 end
 
 
-function maskTransparency_Callback(hObject, eventdata, handles)
-% hObject    handle to maskTransparency (see GCBO)
+% --- Executes on slider movement.
+function sliderTrans_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderTrans (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of maskTransparency as text
-%        str2double(get(hObject,'String')) returns contents of maskTransparency as a double
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-val     = str2double(get(hObject,'String'));
-
-if val > 1
-    val = 1;
-elseif val < 0
-    val = 0;
-end
+val     = get(hObject,'Value');
 
 setappdata(handles.manualSegmentation, 'transparency', val );
 
 isSet   = get(handles.showMask,'Value');
 showMask( handles, isSet );
+
 end
 
 
 % --- Executes during object creation, after setting all properties.
-function maskTransparency_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to maskTransparency (see GCBO)
+function sliderTrans_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderTrans (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
 end
 
 

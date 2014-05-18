@@ -22,7 +22,7 @@ function varargout = regionGrow(varargin)
 
 % Edit the above text to modify the response to help regionGrow
 
-% Last Modified by GUIDE v2.5 16-May-2014 20:48:55
+% Last Modified by GUIDE v2.5 18-May-2014 13:56:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -212,7 +212,7 @@ red             = cat( 3, seedMask, zeros(size(seedMask)), zeros(size(seedMask))
 imshowKeepZoom(red);
 
 % the "data cursor" gets the pixelvalue of the top image so we overlay the
-% current image (importent to find a good thresh)
+% current image (importent to find a good threshInput)
 hold on;
 alpha           = 0.2;
 alpha_matrix    = alpha * ones(size( seedMask,1 ), size( seedMask, 2 ));
@@ -287,7 +287,7 @@ img         = getappdata(handles.regionGrow, 'currImg' );
 seedMask    = getappdata(handles.regionGrow, 'currSeedMask' );
 % if the user didn't submit on the inputfield, the value still might be
 % incorrect
-thresh      = str2double( get( handles.thresh, 'string' ));
+thresh      = str2double( get( handles.threshInput, 'string' ));
 thresh      = round( thresh );
 if thresh < 0
     thresh = 0;
@@ -460,22 +460,32 @@ end
 end
 
 
-function thresh_Callback(hObject, eventdata, handles)
-% hObject    handle to thresh (see GCBO)
+function threshInput_Callback(hObject, eventdata, handles)
+% hObject    handle to threshInput (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of thresh as text
-%        str2double(get(hObject,'String')) returns contents of thresh as a double
+% Hints: get(hObject,'String') returns contents of threshInput as text
+%        str2double(get(hObject,'String')) returns contents of threshInput as a double
 
-thresh = str2double( get( hObject, 'string' ));
-thresh = round( thresh );
+thresh      = str2double( get( hObject, 'string' ));
+thresh      = round( thresh );
+maxNumber   = double( getDataMainGui( 'maxNumber' )); % convert to double
 
 if thresh < 0
     thresh = 0;
+elseif thresh > maxNumber
+    thresh = maxNumber;
 end
 
 set( hObject, 'string', thresh );   
+
+% update slider
+sliderStep      = get( handles.threshSlider, 'SliderStep' );
+stepInputRatio  = maxNumber * sliderStep(1);     % e.g. 65535/0.01
+sliderVal       = thresh / stepInputRatio;
+sliderVal       = sliderVal * sliderStep(1);     % normalize               
+set( handles.threshSlider, 'Value', sliderVal );
 
 % invoke regiongrow
 applyToView( handles, 1 );
@@ -483,8 +493,8 @@ end
 
 
 % --- Executes during object creation, after setting all properties.
-function thresh_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to thresh (see GCBO)
+function threshInput_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to threshInput (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -493,6 +503,44 @@ function thresh_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+end
+
+
+% --- Executes on slider movement.
+function threshSlider_Callback(hObject, eventdata, handles)
+% hObject    handle to threshSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+maxNumber       = double( getDataMainGui( 'maxNumber' ));
+val             = get( hObject,'Value' );
+sliderStep      = get( hObject, 'SliderStep' );
+stepInputRatio  = maxNumber * sliderStep(1);     % e.g. 65535/0.01
+thresh          = val * stepInputRatio;
+thresh          = thresh / sliderStep(1); % normalize
+thresh          = round( thresh );
+
+set( handles.threshInput, 'string', num2str( thresh ));
+% invoke regiongrow
+applyToView( handles, 1 );
+
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function threshSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to threshSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
 end
 
 
@@ -873,9 +921,9 @@ function transToggle_Callback(hObject, eventdata, handles)
 val = get(hObject,'Value');
 
 if val
-    set( handles.transInput, 'enable', 'on' );
+    set( handles.sliderTrans, 'enable', 'on' );
 else
-    set( handles.transInput, 'enable', 'off' );
+    set( handles.sliderTrans, 'enable', 'off' );
 end
 
 setappdata(handles.regionGrow, 'isTransparent', val );
@@ -883,31 +931,33 @@ showMaskMethod( handles );
 end
 
 
-function transInput_Callback(hObject, eventdata, handles)
-% hObject    handle to transInput (see GCBO)
+% --- Executes on slider movement.
+function sliderTrans_Callback(hObject, eventdata, handles)
+% hObject    handle to sliderTrans (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of transInput as text
-%        str2double(get(hObject,'String')) returns contents of transInput as a double
+% Hints: get(hObject,'Value') returns position of slider
+%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-val = str2double(get(hObject,'String'));
+val = get( hObject,'Value' );
 setappdata(handles.regionGrow, 'alpha', val );
 showMaskMethod( handles );
+
 end
 
 
 % --- Executes during object creation, after setting all properties.
-function transInput_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to transInput (see GCBO)
+function sliderTrans_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to sliderTrans (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
 end
 
 
