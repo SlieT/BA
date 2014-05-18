@@ -677,6 +677,7 @@ traRows         = traSize(2);
 traColumns      = traSize(1);
 
 setDataMainGui( 'lastFolder'    , currentFolder  ); 
+setDataMainGui( 'ogImages'      , Images         ); % original images
 setDataMainGui( 'Images'        , Images         ); % all images
 setDataMainGui( 'ogView'        , ogView         ); 
 setDataMainGui( 'maxNumber'     , maxNumber      ); % greatest possible number as pixelvalue for the current image(class)
@@ -744,6 +745,7 @@ setDataMainGui( 'fhGetSagImg'       , @getSagImg    );
 setDataMainGui( 'fhGetCorImg'       , @getCorImg    );
 setDataMainGui( 'fhUpDown'          , @upDown       );
 setDataMainGui( 'fhUpdateLog'       , @updateLog    );
+setDataMainGui( 'fhResetToOg'       , @resetToOg    );
 setDataMainGui( 'handles'           , handles       );
 
 % update lines
@@ -1885,6 +1887,9 @@ elseif strcmp( name, 'roipoly' )
 
     newCell{1} = { 'Cut out inner/outer circle', cell{1}{2}, 'Points', points{1} };
    
+elseif strcmp( name, 'reset' )
+    newCell{1} = { 'Reset of this image' };
+    
 end
 end
 
@@ -1896,4 +1901,51 @@ function saveLog_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 saveLog();
+end
+
+
+function resetToOg( handles )
+% hObject    handle to resetToOg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+currView = get( handles.chooseView, 'Value' );
+ogImages = getDataMainGui( 'ogImages' );
+images   = getDataMainGui( 'Images' );
+hMain    = getDataMainGui( 'handles' );
+
+if currView == 1      % transversal
+    index   = get( hMain.sliderTra, 'Value' );
+    logView = 'tra';
+    images( :, :, index ) = ogImages( :, :, index );
+    
+elseif currView == 2  % sagittal
+    index   = get( hMain.sliderSag, 'Value' );
+    logView = 'sag';
+    images( :, index, : ) = ogImages( :, index, : );
+    
+else                 % coronal
+    index   = get( hMain.sliderCor,'Max' ) + 1 - get( hMain.sliderCor, 'Value' );
+    logView = 'cor';
+    images( index, :, : ) = ogImages( index, :, : );
+    index   = get( hMain.sliderCor, 'Value' );
+    
+end
+
+% update Log
+fhUpdateLog = getDataMainGui( 'fhUpdateLog' );
+feval( fhUpdateLog, {{ 'reset' }}, logView, index );
+
+setDataMainGui( 'ogImages', ogImages );
+setDataMainGui( 'Images', images );
+
+% functionEvaluation
+fhUpdateTraImg = getDataMainGui( 'fhUpdateTraImg' );
+fhUpdateSagImg = getDataMainGui( 'fhUpdateSagImg' );
+fhUpdateCorImg = getDataMainGui( 'fhUpdateCorImg' );
+
+feval( fhUpdateTraImg, get( hMain.sliderTra, 'Value' ), hMain );
+feval( fhUpdateSagImg, get( hMain.sliderSag, 'Value' ), hMain );
+feval( fhUpdateCorImg, get( hMain.sliderCor, 'Value' ), hMain );
+
 end

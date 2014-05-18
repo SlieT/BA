@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 14-May-2014 17:50:24
+% Last Modified by GUIDE v2.5 18-May-2014 02:44:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -863,4 +863,16 @@ else
     fhUpDown = getDataMainGui( 'fhUpDown' );
     feval( fhUpDown, handles, true );
 end
+end
+
+
+% --- Executes on button press in resetToOg.
+function resetToOg_Callback(hObject, eventdata, handles)
+% hObject    handle to resetToOg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+resetToOg = getDataMainGui( 'fhResetToOg' );
+feval( resetToOg, handles );
+
 end

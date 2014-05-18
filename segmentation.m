@@ -22,7 +22,7 @@ function varargout = segmentation(varargin)
 
 % Edit the above text to modify the response to help segmentation
 
-% Last Modified by GUIDE v2.5 14-May-2014 17:50:56
+% Last Modified by GUIDE v2.5 18-May-2014 11:48:24
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -495,8 +495,8 @@ if currMethod == 3
     end
     
     set( handles.undo, 'enable', 'off' );
-    setappdata( handles.segmentation, 'methodHistoryROI'         , {} );
-	setappdata( handles.segmentation, 'methodHistoryIndexROI'    , 0 );
+    setappdata( handles.segmentation, 'methodHistoryROI'     , {} );
+	setappdata( handles.segmentation, 'methodHistoryIndexROI', 0 );
 
 else
     mH = getappdata( handles.segmentation, 'methodHistory' );
@@ -531,6 +531,10 @@ else
         end
         currIndex      = get( hMain.sliderCor, 'Value' );
     end
+    
+    set( handles.undo, 'enable', 'off' );
+    setappdata( handles.segmentation, 'methodHistory'     , {} );
+	setappdata( handles.segmentation, 'methodHistoryIndex', 0 );
 end
 
 setDataMainGui( 'Images', images );
@@ -788,7 +792,8 @@ if currVal == 1      % Trim to rectangle *
     set( handles.applyToImages  , 'visible' , 'on' );
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
-    set( handles.newCircle      , 'visible' , 'off' ); 
+    set( handles.newCircle      , 'visible' , 'off' );
+    set( handles.resetToOg      , 'visible' , 'off' );
     
     if isInfo
         set( handles.infoText       , 'string'  , 'This method sets every pixel outside of the rectangle to 0. The first point( syntax of a point: x,y ) is the upper left, the second one is the lower right.' );
@@ -810,6 +815,7 @@ elseif currVal == 2  % New interval of gray levels
     set( handles.undo           , 'string'  , 'Undo' );
     set( handles.applyToView    , 'visible' , 'on' );
     set( handles.newCircle      , 'visible' , 'off' ); 
+    set( handles.resetToOg      , 'visible' , 'on' );
     
     if isInfo
         set( handles.infoText       , 'string'  , 'Appling a new grayscale-interval means, that every pixel below or above the new range is set to 0.' );
@@ -832,6 +838,7 @@ elseif currVal == 3 % Cut out inner/outer circle
     set( handles.applyToImages  , 'visible' , 'off' );
     set( handles.newCircle      , 'visible' , 'on' ); 
     set( handles.applyToView    , 'visible' , 'off' );
+    set( handles.resetToOg      , 'visible' , 'on' );
     set( handles.undo           , 'string'  , 'Undo only this method' );
     
     if isInfo
@@ -1022,4 +1029,16 @@ else
     fhUpDown = getDataMainGui( 'fhUpDown' );
     feval( fhUpDown, handles, true );
 end
+end
+
+
+% --- Executes on button press in resetToOg.
+function resetToOg_Callback(hObject, eventdata, handles)
+% hObject    handle to resetToOg (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+resetToOg = getDataMainGui( 'fhResetToOg' );
+feval( resetToOg, handles );
+
 end
