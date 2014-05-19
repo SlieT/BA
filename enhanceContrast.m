@@ -641,7 +641,8 @@ isInfo      = getappdata(handles.enhanceContrast, 'isInfo' );
 
 if currVal == 1      % Distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'imadjust' );
-    set( handles.valuePanel , 'visible', 'off' );
+    set( handles.valuePanel     , 'visible', 'off' );
+    set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
     	set( handles.infoText   , 'string' , 'Distributes the intensities in the current image.' );
@@ -649,7 +650,8 @@ if currVal == 1      % Distribute intensities
     
 elseif currVal == 2      % Distribute intensities (coherent)
     setappdata(handles.enhanceContrast, 'currMethod', 'imadjust_coherent' );
-    set( handles.valuePanel , 'visible', 'off' );
+    set( handles.valuePanel     , 'visible', 'off' );
+    set( handles.applyToImage   , 'enable', 'off' );
     
     if isInfo
     	set( handles.infoText   , 'string' , 'Distributes the intensities in this image, seen in the "Test view". The image is then used as a "scheme" for any other image to get a coherent result of contrast improvement, at the same intensity-level.' );
@@ -657,11 +659,12 @@ elseif currVal == 2      % Distribute intensities (coherent)
     
 elseif currVal == 3  % Weighted distribute intensities
     setappdata(handles.enhanceContrast, 'currMethod', 'gamma' );
-    set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string' , 'Gamma');
-    set( handles.val1       , 'string' , '1');
-    set( handles.textVal2   , 'visible', 'off' );
-    set( handles.val2       , 'visible', 'off' );
+    set( handles.valuePanel     , 'visible', 'on' );
+    set( handles.textVal1       , 'string' , 'Gamma');
+    set( handles.val1           , 'string' , '1');
+    set( handles.textVal2       , 'visible', 'off' );
+    set( handles.val2           , 'visible', 'off' );
+    set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
         set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end.' );
@@ -669,14 +672,16 @@ elseif currVal == 3  % Weighted distribute intensities
     
 elseif currVal == 4  % Adaptive histogram equalization
     setappdata(handles.enhanceContrast, 'currMethod', 'adapthisteq' );
-    set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string' , 'M');
-    set( handles.val1       , 'string' , '8');
+    set( handles.valuePanel     , 'visible', 'on' );
+    set( handles.textVal1       , 'string' , 'M');
+    set( handles.val1           , 'string' , '8');
     
-    set( handles.textVal2   , 'visible', 'on' );
-    set( handles.textVal2   , 'string' , 'N');
-    set( handles.val2       , 'visible', 'on' );
-    set( handles.val2       , 'string' , '8');
+    set( handles.textVal2       , 'visible', 'on' );
+    set( handles.textVal2       , 'string' , 'N');
+    set( handles.val2           , 'visible', 'on' );
+    set( handles.val2           , 'string' , '8');
+    
+    set( handles.applyToImage   , 'enable', 'on' );
 
     if isInfo
     	set( handles.infoText   , 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
@@ -684,7 +689,8 @@ elseif currVal == 4  % Adaptive histogram equalization
     
 elseif currVal == 5  % Complement 
     setappdata(handles.enhanceContrast, 'currMethod', 'imcomplement' );
-    set( handles.valuePanel , 'visible', 'off' );
+    set( handles.valuePanel     , 'visible', 'off' );
+    set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
     	set( handles.infoText   , 'string' , 'This method complements the current image.' );
@@ -692,11 +698,12 @@ elseif currVal == 5  % Complement
     
 elseif currVal == 6  % Logarithmic transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'log' );
-    set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string' , 'c');
-    set( handles.val1       , 'string' , '1.4');
-    set( handles.textVal2   , 'visible', 'off' );
-    set( handles.val2       , 'visible', 'off' );
+    set( handles.valuePanel     , 'visible', 'on' );
+    set( handles.textVal1       , 'string' , 'c');
+    set( handles.val1           , 'string' , '1.4');
+    set( handles.textVal2       , 'visible', 'off' );
+    set( handles.val2           , 'visible', 'off' );
+    set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
     	set( handles.infoText   , 'string' , 'To enhance the contrast of bright pixels COMPLEMENT the image first, because applying the logarithmic transformation will expand values of dark pixels in an image while compressing the bright pixels. Method: c*(log(1 + image))' );
@@ -704,19 +711,21 @@ elseif currVal == 6  % Logarithmic transformation
     
 elseif currVal == 7  % Contrast-stretching transformation
     setappdata(handles.enhanceContrast, 'currMethod', 'stretch' );
-    set( handles.valuePanel , 'visible', 'on' );
-    set( handles.textVal1   , 'string' , 'E');
-    set( handles.val1       , 'string' , '4');
+    set( handles.valuePanel     , 'visible', 'on' );
+    set( handles.textVal1       , 'string' , 'E');
+    set( handles.val1           , 'string' , '4');
     
-    set( handles.textVal2   , 'visible', 'on' );
-    set( handles.textVal2   , 'string' , 'm or pixelToM');
-    maxNumber               = getDataMainGui( 'maxNumber' );
-    sVal2                   = strcat( 'If m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/', num2str(maxNumber), ').' );
-    set( handles.textVal2   , 'tooltipString', sVal2 );
+    set( handles.textVal2       , 'visible', 'on' );
+    set( handles.textVal2       , 'string' , 'm or pixelToM');
+    maxNumber                   = getDataMainGui( 'maxNumber' );
+    sVal2                       = strcat( 'If m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/', num2str(maxNumber), ').' );
+    set( handles.textVal2       , 'tooltipString', sVal2 );
     
-    set( handles.val2       , 'visible', 'on' );
-    set( handles.val2       , 'string' , 'see tooltip');
-    set( handles.val2       , 'tooltipString', sVal2 );
+    set( handles.val2           , 'visible', 'on' );
+    set( handles.val2           , 'string' , 'see tooltip');
+    set( handles.val2           , 'tooltipString', sVal2 );
+    
+    set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
         set( handles.infoText   , 'string' , '(CLICK on this text to get more help) Contrast-stretching transformations increase the contrast at a certain level(m) by transforming everything dark a lot darker and everything bright a lot brighter, with only a few levels of gray around the point of interest. E controls the slope of the function and m is the mid-line where it switches from dark values to light values.' );

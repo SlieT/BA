@@ -635,7 +635,6 @@ if strcmp( label, 'Load')
     end
 end
 
-
 % update the static text
 staticCurrentFolder = strrep( currentFolder, pwd, '' );           % replace the pwd with an empty string
 staticCurrentFolder = strcat( '...', staticCurrentFolder );
@@ -748,6 +747,11 @@ setDataMainGui( 'fhUpdateLog'       , @updateLog    );
 setDataMainGui( 'fhResetToOg'       , @resetToOg    );
 setDataMainGui( 'handles'           , handles       );
 
+% if Load dont forget to update Log
+if strcmp( label, 'Load')
+    feval( @updateLog, {{ 'imadjust_coherent', u, o, ogView, num2str(firstImg) }}, 'all', -1 );
+end
+    
 % update lines
 setDataMainGui( 'showLines'    , get( handles.checkboxShowLines, 'Value' ) );  % is equal to false
 updateTraLines( handles );
