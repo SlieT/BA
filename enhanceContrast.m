@@ -22,7 +22,7 @@ function varargout = enhanceContrast(varargin)
 
 % Edit the above text to modify the response to help enhanceContrast
 
-% Last Modified by GUIDE v2.5 18-May-2014 02:44:54
+% Last Modified by GUIDE v2.5 22-May-2014 12:43:02
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -215,7 +215,10 @@ function imgEnhanced = applyMethods( img, methodHistory, methodHistoryIndex )
         mName = mH{i}{1};
         
         if strcmp(mName, 'imadjust')
-            img = imadjust( img );
+            maxNumber = getDataMainGui( 'maxNumber' ); 
+            u	= double(min(img(:))) / double(maxNumber);
+            o	= double(max(img(:))) / double(maxNumber);
+            img = imadjust( img, [ u o ], [ 0 1 ] );
             
         elseif strcmp(mName, 'imadjust_coherent')
             u       = mH{i}{2}; 
@@ -301,7 +304,10 @@ mHIndex = mHIndex + 1;
 
 if strcmp(method, 'imadjust')
     mH{ mHIndex }   = { 'imadjust' };
-    testImg         = imadjust( testImg );
+    maxNumber       = getDataMainGui( 'maxNumber' ); 
+    u               = double(min(testImg(:))) / double(maxNumber);
+    o               = double(max(testImg(:))) / double(maxNumber);
+    testImg         = imadjust( testImg, [ u o ], [ 0 1 ] );
     
 elseif strcmp(method, 'imadjust_coherent')
     maxNumber       = getDataMainGui( 'maxNumber' ); 
@@ -336,6 +342,10 @@ elseif strcmp(method, 'gamma')
     u               = double(min(testImg(:))) / double(maxNumber);
     o               = double(max(testImg(:))) / double(maxNumber); 
     g               = str2double( get( handles.val1, 'string' ));
+    if g <= 0
+        g = 0.1;
+    end
+    set( handles.val1, 'string', g );
     mH{ mHIndex }   = { 'gamma', u, o, g };
     testImg = imadjust( testImg, [ u o ], [ 0 1 ], g );
     
@@ -667,7 +677,7 @@ elseif currVal == 3  % Weighted distribute intensities
     set( handles.applyToImage   , 'enable', 'on' );
     
     if isInfo
-        set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end.' );
+        set( handles.infoText   , 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1 && gamma > 0) or the darker(gamma > 1) end.' );
     end
     
 elseif currVal == 4  % Adaptive histogram equalization
@@ -684,7 +694,7 @@ elseif currVal == 4  % Adaptive histogram equalization
     set( handles.applyToImage   , 'enable', 'on' );
 
     if isInfo
-    	set( handles.infoText   , 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
+    	set( handles.infoText   , 'string' , 'Adaptive histogram equalization(contrast limited) enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
     end
     
 elseif currVal == 5  % Complement 
@@ -772,7 +782,7 @@ if strcmp(get( hObject, 'string' ), 'Click me to get more informations.' )
         set( handles.infoText, 'string' , 'Distributes the given intensities over the hole spectrum of possible ones - weighted towards the brighter (gamma < 1) or the darker(gamma > 1) end.' );
 
     elseif currVal == 4  % Adaptive histogram equalization
-        set( handles.infoText, 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on small regions in the image, so called ''tiles''. These tiles are of size M * N pixels. M and N take values greater or equal ''2''.' );
+        set( handles.infoText, 'string' , 'Adaptive histogram equalization enhances the contrast of the image by using the ''histogram equalization''-method but only on subregions in the image, so called ''tiles''. The total number of tiles is equal to M(number of row tiles)* N(number of column tiles).' );
 
     elseif currVal == 5  % Complement 
         set( handles.infoText, 'string' , 'This method complements the current image.' );

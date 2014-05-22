@@ -535,17 +535,32 @@ if isempty( files )                                         % contains any image
     return;
 end
 
-% Whats the view of the input images?
-ogView = questdlg('View of the images?', ...
-	'View of images', ...
-	'Transversal','Sagittal','Coronal','Transversal');
+% get view
+metadata    = dicominfo(fullfile( currentFolder, files(1).name ));
 
+% if the view is a attribute in the dicominfo
+if isfield(metadata,'Private_2001_100b')
+    
+    ogView = metadata.Private_2001_100b;
+    ogView = lower( ogView ); 
+    
+% set view manually
+else
+    % Whats the view of the input images?
+    ogView = questdlg('View of the images?', ...
+        'View of images', ...
+        'Transversal','Sagittal','Coronal','Transversal');
+
+    ogView = lower( ogView )
+end
+
+% set ogVIew
 switch ogView
-    case 'Transversal'
+    case 'transversal'
         ogView = 'tra';
-    case 'Sagittal'
+    case 'sagittal'
         ogView = 'sag';
-    case 'Coronal'
+    case 'coronal'
         ogView = 'cor';
 end
 
