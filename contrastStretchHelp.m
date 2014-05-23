@@ -22,7 +22,7 @@ function varargout = contrastStretchHelp(varargin)
 
 % Edit the above text to modify the response to help contrastStretchHelp
 
-% Last Modified by GUIDE v2.5 26-Feb-2014 17:29:14
+% Last Modified by GUIDE v2.5 23-May-2014 18:39:31
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
