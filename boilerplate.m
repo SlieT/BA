@@ -216,90 +216,34 @@ imshowKeepZoom( currImg );
 
 end
 
-% XXX brauchts die? wenn nein lösche das attribute in der figure und passe
-% oben im text an das diese nicht angepasst werden muss
-% --- Executes during object creation, after setting all properties.
-function chooseView_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to chooseView (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-end
 
 % --- since the view is synced to the main figure, we need a function
-%       to update the testView through feval
+%       to update the testView if the image changes in main
 function updateTestView(view, currImg)
 handles     = getDataMainGui( 'hboilerplate' );
 currView    = getappdata( handles.boilerplate, 'currView' );
 
-% XXX überall noch den klammerabstand ( text ) einbauen nicht (text)
-% XXX ist nicht einfacher zu lesen
-% if strcmp(view, currView) && strcmp(view,'tra')
-if strcmp(currView,'tra') && strcmp(view,'tra')         % transversal
-    setappdata(handles.boilerplate, 'currTraImg', currImg );
-    setappdata(handles.boilerplate, 'currImg', currImg );
+% check wich view has changed its image in the main figure 
+% and which view is the current one in this figure
+if strcmp( currView, view ) && strcmp( view, 'tra' )          % transversal
+    setappdata( handles.boilerplate, 'currTraImg', currImg );
+    setappdata( handles.boilerplate, 'currImg', currImg );
     
-elseif strcmp(currView,'sag') && strcmp(view,'sag')     % sagittal
-    setappdata(handles.boilerplate, 'currSagImg', currImg );
-    setappdata(handles.boilerplate, 'currImg', currImg );
+elseif strcmp( currView, 'sag' ) && strcmp( view, 'sag' )     % sagittal
+    setappdata( handles.boilerplate, 'currSagImg', currImg );
+    setappdata( handles.boilerplate, 'currImg', currImg );
     
-elseif strcmp(currView,'cor') && strcmp(view,'cor')     % coronal
-    setappdata(handles.boilerplate, 'currCorImg', currImg );
-    setappdata(handles.boilerplate, 'currImg', currImg );
+elseif strcmp( currView, 'cor' ) && strcmp( view, 'cor' )     % coronal
+    setappdata( handles.boilerplate, 'currCorImg', currImg );
+    setappdata( handles.boilerplate, 'currImg', currImg );
     
 end
 
-% XXX noch ordentlichen kommentar if the changed image in the main 
-if strcmp(currView,view)
+% prevent redrawing your current image if the changed image in main is 
+% not in your current view
+if strcmp( currView,view )
     imshowKeepZoom( currImg );
 end
-end
-
-
-% --- Executes when boilerplate is resized.
-function boilerplate_ResizeFcn(hObject, eventdata, handles)
-% hObject    handle to boilerplate (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% testViewPanel and testView have the property "units" set to "normalized"
-
-oldUnits        = get(hObject,'Units');
-set(hObject,'Units','pixels');
-figPos          = get(hObject,'Position');
-
-% set infoText
-set(handles.infoText,'Units','pixels');
-infoTextPos     = get(handles.infoText,'Position');
-% upos          = left, bottom, widht, height
-% new bottom    = heightFigure-hightInfo-7pxDefaultSpace(the space between infoText and upper border of the figure)
-% 7pxDefaultSpace = figPos(4) - infoTextPos(2) - infoTextPos(4)
-newBottom       = figPos(4) - infoTextPos(4) - 7;
-upos            = [infoTextPos(1), newBottom, infoTextPos(3), infoTextPos(4)];
-set(handles.infoText,'Position',upos);
-
-% set methodPanel
-set(handles.methodPanel,'Units','pixels');
-methodPanelPos      = get(handles.methodPanel,'Position');
-newBottom           = figPos(4) - methodPanelPos(4) - 49;
-oldUnitsUIPanel2    = get(handles.testViewPanel,'Units');
-set(handles.testViewPanel,'Units','pixels');
-UIPanel2Pos         = get(handles.testViewPanel,'Position');
-%methodPanelPos(1)-(UIPanel2Pos(1)+UIPanel2Pos(3)) = 32 % space between
-%testViewPanel and methodPanel
-newLeft             = UIPanel2Pos(1) + UIPanel2Pos(3) + 32;
-%newLeft         = figPos(3) - methodPanelPos(3) - 21; % keep method Panel
-%on the right edge
-upos                = [newLeft, newBottom, methodPanelPos(3), methodPanelPos(4)];
-set(handles.methodPanel,'Position',upos);
-set(handles.testViewPanel,'Units',oldUnitsUIPanel2);
-
-set(hObject,'Units',oldUnits);
 end
 
 
@@ -355,5 +299,59 @@ if eventdata.VerticalScrollCount > 0
 else
     fhUpDown = getDataMainGui( 'fhUpDown' );
     feval( fhUpDown, handles, true );
+end
+end
+
+
+% --- Executes when boilerplate is resized.
+function boilerplate_ResizeFcn(hObject, eventdata, handles)
+% hObject    handle to boilerplate (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% testViewPanel and testView have the property "units" set to "normalized"
+
+oldUnits        = get( hObject, 'Units' );
+set( hObject, 'Units', 'pixels' );
+figPos          = get( hObject, 'Position' );
+
+% set infoText
+set( handles.infoText, 'Units', 'pixels' );
+infoTextPos     = get( handles.infoText, 'Position' );
+% upos          = left, bottom, widht, height
+% new bottom    = heightFigure - hightInfo - 7 (the space between infoText and upper border of the figure)
+                                           % 7pxDefaultSpace = figPos( 4 ) - infoTextPos( 2 ) - infoTextPos( 4 )
+newBottom       = figPos( 4 ) - infoTextPos( 4 ) - 7;
+upos            = [ infoTextPos( 1 ), newBottom, infoTextPos( 3 ), infoTextPos( 4 )];
+set( handles.infoText, 'Position', upos );
+
+% set methodPanel
+set( handles.methodPanel, 'Units', 'pixels' );
+methodPanelPos      = get( handles.methodPanel, 'Position' );
+newBottom           = figPos( 4 ) - methodPanelPos( 4 ) - 49;
+oldUnitsUIPanel2    = get( handles.testViewPanel, 'Units' );
+set( handles.testViewPanel, 'Units', 'pixels' );
+UIPanel2Pos         = get( handles.testViewPanel, 'Position' );
+% methodPanelPos( 1 ) - ( UIPanel2Pos( 1 ) + UIPanel2Pos( 3 )) = 32 % space between testViewPanel and methodPanel
+newLeft             = UIPanel2Pos( 1 ) + UIPanel2Pos( 3 ) + 32;
+% newLeft           = figPos( 3 ) - methodPanelPos( 3 ) - 21;       % keep method Panel on the right edge
+upos                = [ newLeft, newBottom, methodPanelPos( 3 ), methodPanelPos( 4 )];
+set( handles.methodPanel, 'Position' ,upos );
+set( handles.testViewPanel, 'Units', oldUnitsUIPanel2 );
+
+set( hObject, 'Units', oldUnits );
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function chooseView_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to chooseView (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
 end

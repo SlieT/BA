@@ -658,6 +658,7 @@ if sizeM(1) == 0
     % update on "new image" (slider up/down or +/-) if no mask exist
     img         = getappdata(handles.regionGrow, 'currImg' );
     imshowKeepZoom(img);
+    
     return;
 end
 

@@ -728,12 +728,12 @@ elseif currVal == 7  % Contrast-stretching transformation
     set( handles.textVal2       , 'visible', 'on' );
     set( handles.textVal2       , 'string' , 'm or pixelToM');
     maxNumber                   = getDataMainGui( 'maxNumber' );
-    sVal2                       = strcat( 'If m is between [0 - 1] it will take the number as ''m''. Otherwise it will take the number as a pixelvalue to compute ''m'' (m=pixelvalue/', num2str(maxNumber), ').' );
-    set( handles.textVal2       , 'tooltipString', sVal2 );
+    sVal2                       = strcat( 'If m is between [0 - 1] it will take the number as ''m''.\n Use the rgb-value from the "data cursor" to easily get m.\n Otherwise it will take the number as a pixelvalue to compute ''m'' (m = pixelvalue divided by ', num2str(maxNumber), ').' );
+    set( handles.textVal2       , 'tooltipString', sprintf(sVal2) );
     
     set( handles.val2           , 'visible', 'on' );
     set( handles.val2           , 'string' , 'see tooltip');
-    set( handles.val2           , 'tooltipString', sVal2 );
+    set( handles.val2           , 'tooltipString', sprintf(sVal2) );
     
     set( handles.applyToImage   , 'enable', 'on' );
     
